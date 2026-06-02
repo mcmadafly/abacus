@@ -13,6 +13,7 @@
     "dev": "bun run tracker:build && bun run --filter='@abacus/web' dev",
     "build": "bun run tracker:build && bun run --filter='@abacus/web' build",
     "deploy": "bun run build && bun run --filter='@abacus/web' deploy",
+    "deploy:auth": "PUBLIC_AUTH_ENABLED=true PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_Y2xlcmsuYWJhY3VzbHl0aWNzLmNvbSQ bun run deploy",
     "tracker:build": "bun run --filter='@abacus/tracker' build",
     "db:generate": "bun run --filter='@abacus/db' generate",
     "db:migrate": "bun run --filter='@abacus/web' db:migrate",

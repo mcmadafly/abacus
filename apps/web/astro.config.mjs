@@ -29,6 +29,34 @@ const clerkStub = {
 const noop = (/** @type {string} */ p) =>
   fileURLToPath(new URL(p, import.meta.url));
 
+// @clerk/astro registers two client-only injected scripts (before-hydration +
+// page) that do a top-level `await runInjectionScript()` touching `document`.
+// A bundling bug in @astrojs/cloudflare v12 emits the before-hydration chunk
+// into the SSR worker bundle, so that top-level await runs at Worker startup →
+// "document is not defined" and the deploy/runtime dies. These scripts are only
+// ever meant to run in the browser, so we empty them in the SSR build only; the
+// CLIENT build (env name "client") still gets the real Clerk init, so the
+// widgets hydrate normally. SSR HTML uses the manifest's inlined string / URL,
+// which is unaffected.
+/** @type {import('vite').Plugin} */
+const stripClerkScriptsSSR = {
+  name: "abacus-strip-clerk-client-scripts-ssr",
+  enforce: "pre",
+  resolveId(/** @type {string} */ id, _importer, /** @type {any} */ options) {
+    const env = /** @type {any} */ (this).environment;
+    const isSSR = options?.ssr === true || (env && env.name !== "client");
+    const isClerkInjectedScript =
+      id === "astro:scripts/before-hydration.js" ||
+      id === "astro:scripts/page.js";
+    if (isSSR && isClerkInjectedScript) return "\0abacus-empty-clerk-script";
+    return null;
+  },
+  load(/** @type {string} */ id) {
+    if (id === "\0abacus-empty-clerk-script") return "";
+    return null;
+  },
+};
+
 // https://astro.build/config
 export default defineConfig({
   output: "server",
@@ -48,7 +76,9 @@ export default defineConfig({
   }),
   integrations: withClerk ? [clerk()] : [],
   vite: {
-    plugins: withClerk ? [tailwindcss()] : [tailwindcss(), clerkStub],
+    plugins: withClerk
+      ? [tailwindcss(), stripClerkScriptsSSR]
+      : [tailwindcss(), clerkStub],
     resolve: withClerk
       ? {}
       : {
