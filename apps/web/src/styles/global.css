@@ -292,6 +292,15 @@ a { color: inherit; text-decoration: none; }
 .nav__login { font-size: 0.92rem; font-weight: 500; color: var(--ink-soft); transition: color .18s; white-space: nowrap; }
 .nav__login:hover { color: var(--ink); }
 
+/* Auth-aware nav: signed-out CTAs show by default (no hydration flash for the
+   common case). The Clerk <SignedIn> control element (`clerk-signed-in`) stays
+   [hidden] until the client confirms a session; when it reveals, the :has()
+   rule hides the signed-out CTAs and the avatar + Dashboard take their place. */
+.nav__auth { display: flex; align-items: center; gap: 18px; }
+.nav__signed-out { display: flex; align-items: center; gap: 18px; }
+.nav__signed-in:not([hidden]) { display: flex; align-items: center; gap: 14px; }
+.nav__auth:has(.nav__signed-in:not([hidden])) .nav__signed-out { display: none; }
+
 /* ---------- buttons ---------- */
 .btn {
   display: inline-flex; align-items: center; gap: 9px;
