@@ -21,7 +21,7 @@
     {
       "binding": "DB",
       "database_name": "abacus-db",
-      "database_id": "REPLACE_WITH_REAL_D1_ID",
+      "database_id": "1185dcaf-de43-4e26-9c5f-91e13936aeb0",
       "migrations_dir": "../../packages/db/migrations"
     }
   ],
@@ -32,7 +32,7 @@
   "kv_namespaces": [
     {
       "binding": "SESSION",
-      "id": "REPLACE_WITH_REAL_KV_ID"
+      "id": "c6fd5138ba4d4e02b30d280ce85a2c77"
     }
   ],
 
@@ -52,6 +52,6 @@
   // Non-secret vars. Secrets (CLERK_SECRET_KEY, RESEND_API_KEY,
   // CF_AE_API_TOKEN, VISITOR_HASH_SALT) come from .dev.vars / `wrangler secret put`.
   "vars": {
-    "CF_ACCOUNT_ID": ""
+    "CF_ACCOUNT_ID": "9acf5bdc7c2c3d46f02c207c438bc7a0"
   }
 }
