@@ -1,0 +1,46 @@
+---
+import BrandMark from "./BrandMark.astro";
+const year = new Date().getFullYear();
+---
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot__grid">
+      <div class="foot__brand">
+        <span class="brand">
+          <span class="brand__mark"><BrandMark /></span>
+          <span class="brand__name">Abacus</span>
+        </span>
+        <p class="foot__blurb">
+          Privacy-first web analytics with a daily email you'll actually read.
+          Simple, lightweight, and kind to your visitors.
+        </p>
+      </div>
+      <div class="foot__col">
+        <h4>Product</h4>
+        <a href="/#features">Features</a>
+        <a href="/#how">How it works</a>
+        <a href="/#demo">Live demo</a>
+        <a href="/#pricing">Pricing</a>
+      </div>
+      <div class="foot__col">
+        <h4>Company</h4>
+        <a href="/#">About</a>
+        <a href="/#">Blog</a>
+        <a href="/#">Open source</a>
+        <a href="/#">Contact</a>
+      </div>
+      <div class="foot__col">
+        <h4>Support</h4>
+        <a href="/docs">Docs</a>
+        <a href="/#">Status</a>
+        <a href="/#">Data policy</a>
+        <a href="/#">Privacy</a>
+      </div>
+    </div>
+    <div class="foot__bar">
+      <span>© {year} Abacus Analytics, Inc.</span>
+      <span>No cookies were set making this page.</span>
+    </div>
+  </div>
+</footer>

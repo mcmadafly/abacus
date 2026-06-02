@@ -1,0 +1,133 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+
+const snippet = `<script defer data-domain="yourdomain.com"
+  src="https://abacuslytics.com/abacus.js"></script>`;
+const customEvent = `<button onclick="window.abacus('signup')">Sign up</button>`;
+---
+
+<Layout title="Docs — Abacus">
+  <Nav />
+  <main>
+    <section class="sec">
+      <div class="wrap docs">
+        <div class="sec__head">
+          <span class="eyebrow"><span class="dot"></span>Documentation</span>
+          <h2>Up and running in <em>two minutes.</em></h2>
+        </div>
+
+        <div class="docs__body">
+          <h3>1. Install the script</h3>
+          <p>
+            Add this single tag to the <code>&lt;head&gt;</code> of every page you
+            want to measure. Replace <code>yourdomain.com</code> with the domain you
+            registered in your dashboard.
+          </p>
+          <pre><code>{snippet}</code></pre>
+
+          <h3>2. Custom events</h3>
+          <p>
+            Track goals like signups or purchases by calling the global
+            <code>window.abacus()</code> function with an event name.
+          </p>
+          <pre><code>{customEvent}</code></pre>
+
+          <h3>3. Single-page apps</h3>
+          <p>
+            The script automatically hooks into the History API, so client-side
+            route changes in React, Vue, Svelte and friends are counted as
+            pageviews — no extra setup needed.
+          </p>
+
+          <h3>Excluding traffic</h3>
+          <ul>
+            <li>
+              <strong>Yourself:</strong> run
+              <code>localStorage.abacus_ignore = 'true'</code> in your browser console
+              to stop counting your own visits.
+            </li>
+            <li>
+              <strong>Paths:</strong> add
+              <code>data-exclude="/admin/*,/preview"</code> to the script tag to skip
+              matching paths.
+            </li>
+            <li>
+              <strong>Localhost</strong> is ignored by default. Add
+              <code>data-allow-local</code> to override.
+            </li>
+          </ul>
+
+          <h3>Privacy</h3>
+          <p>
+            Abacus stores no cookies and no IP addresses. Unique visitors are
+            counted using a salted hash that rotates every day and can't be
+            reversed or used to follow anyone across sites — which is why no
+            consent banner is required.
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>
+
+<style>
+  .docs {
+    max-width: 760px;
+  }
+  .docs__body {
+    margin-top: 36px;
+  }
+  .docs__body h3 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 1.5rem;
+    letter-spacing: -0.01em;
+    margin-top: 40px;
+  }
+  .docs__body h3:first-child {
+    margin-top: 0;
+  }
+  .docs__body p {
+    color: var(--ink-soft);
+    font-size: 1rem;
+    line-height: 1.65;
+    margin-top: 10px;
+  }
+  .docs__body ul {
+    margin-top: 12px;
+    padding-left: 20px;
+    display: grid;
+    gap: 10px;
+  }
+  .docs__body li {
+    color: var(--ink-soft);
+    line-height: 1.6;
+  }
+  .docs__body code {
+    font-family: var(--mono);
+    font-size: 0.82em;
+    background: var(--bg-2);
+    border: 1px solid var(--line-soft);
+    border-radius: 5px;
+    padding: 1px 6px;
+  }
+  .docs__body pre {
+    margin-top: 16px;
+    background: var(--slate);
+    border-radius: var(--radius-sm);
+    padding: 18px 20px;
+    overflow-x: auto;
+  }
+  .docs__body pre code {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    color: oklch(0.92 0.02 285);
+    background: none;
+    border: none;
+    padding: 0;
+    white-space: pre;
+  }
+</style>

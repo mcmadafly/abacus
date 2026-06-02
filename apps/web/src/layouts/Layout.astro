@@ -1,0 +1,66 @@
+---
+import "../styles/global.css";
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = "Abacus — privacy-first analytics, delivered to your inbox",
+  description = "Abacus is a featherweight, cookie-free analytics tool that respects your visitors — and emails you a clean, readable report every morning.",
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark light" />
+    <!-- Set the theme before first paint (default: dark) to avoid a flash. -->
+    <script is:inline>
+      (function () {
+        try {
+          var t = localStorage.getItem("abacus-theme");
+          document.documentElement.dataset.theme = t === "light" ? "light" : "dark";
+        } catch (e) {
+          document.documentElement.dataset.theme = "dark";
+        }
+      })();
+    </script>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <!-- Abacus eats its own dog food: the marketing site is tracked by Abacus
+         itself, feeding the public "live demo" dashboard. data-allow-local lets
+         it record during local dev; we skip the app/auth/api routes. -->
+    <script
+      is:inline
+      defer
+      data-domain="abacuslytics.com"
+      data-allow-local
+      data-exclude="/app/*,/sign-in/*,/sign-up/*,/api/*"
+      src="/abacus.js"></script>
+  </head>
+  <body>
+    <slot />
+    <!-- One delegated handler flips + persists the theme for every toggle. -->
+    <script is:inline>
+      document.addEventListener("click", function (e) {
+        var btn = e.target.closest("[data-theme-toggle]");
+        if (!btn) return;
+        var next =
+          document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+        document.documentElement.dataset.theme = next;
+        try {
+          localStorage.setItem("abacus-theme", next);
+        } catch (err) {}
+      });
+    </script>
+  </body>
+</html>

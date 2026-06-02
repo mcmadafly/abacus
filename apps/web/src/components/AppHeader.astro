@@ -1,0 +1,43 @@
+---
+import { UserButton } from "@clerk/astro/components";
+import BrandMark from "./BrandMark.astro";
+import ThemeToggle from "./ThemeToggle.astro";
+import { clerkAppearance } from "../lib/clerkAppearance";
+import { AUTH_DISABLED } from "../lib/auth";
+
+interface Props {
+  crumb?: string;
+}
+const { crumb } = Astro.props;
+---
+
+<header class="border-b border-[var(--line-soft)] bg-[var(--paper)]">
+  <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+    <div class="flex items-center gap-3 text-sm">
+      <a href="/app" class="flex items-center gap-2">
+        <BrandMark size={26} />
+        <span class="text-xl font-bold tracking-tight">Abacus</span>
+      </a>
+      {
+        crumb && (
+          <>
+            <span class="text-[var(--ink-mute)]">/</span>
+            <span class="text-[var(--ink-soft)]">{crumb}</span>
+          </>
+        )
+      }
+    </div>
+    <div class="flex items-center gap-3">
+      <ThemeToggle />
+      {
+        AUTH_DISABLED ? (
+          <span class="rounded-full border border-[var(--line)] bg-[var(--bg-2)] px-3 py-1 font-mono text-xs text-[var(--ink-mute)]">
+            dev
+          </span>
+        ) : (
+          <UserButton appearance={clerkAppearance} />
+        )
+      }
+    </div>
+  </div>
+</header>

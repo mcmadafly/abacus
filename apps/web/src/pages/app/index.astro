@@ -1,0 +1,128 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import AppHeader from "../../components/AppHeader.astro";
+import { createDb, digestSubscriptions } from "@abacus/db";
+import {
+  createSite,
+  ensureAccount,
+  listSites,
+} from "../../lib/account";
+import { resolveUser } from "../../lib/auth";
+
+export const prerender = false;
+
+const me = await resolveUser(Astro.locals);
+if (!me) return Astro.redirect("/sign-in");
+const { userId, email } = me;
+
+const db = createDb(Astro.locals.runtime.env.DB);
+await ensureAccount(db, userId, email);
+
+let error: string | null = null;
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  const domain = String(form.get("domain") ?? "");
+  const result = await createSite(db, userId, domain);
+  if (result.ok) {
+    // Subscribe the owner to the daily digest for their new site.
+    await db
+      .insert(digestSubscriptions)
+      .values({ siteId: result.site.id, email })
+      .onConflictDoNothing();
+    return Astro.redirect(`/app/${result.site.id}`);
+  }
+  error = result.error;
+}
+
+const sites = await listSites(db, userId);
+---
+
+<Layout title="Your sites — Abacus">
+  <AppHeader />
+  <main class="mx-auto w-full max-w-6xl flex-1 px-6 py-10">
+    <div class="flex items-center justify-between">
+      <h1 class="font-serif text-3xl font-medium tracking-tight">
+        {sites.length === 0 ? "Welcome to Abacus" : "Your sites"}
+      </h1>
+    </div>
+
+    {
+      sites.length === 0 && (
+        <a
+          href="/app/demo"
+          class="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[var(--line)] bg-[var(--iris-wash)] p-6 transition-colors hover:border-abacus-500"
+        >
+          <div>
+            <p class="font-mono text-xs uppercase tracking-wide text-abacus-700">
+              ● Start here — live demo
+            </p>
+            <h2 class="mt-1.5 font-serif text-xl font-medium">
+              See Abacus in action
+            </h2>
+            <p class="mt-1 max-w-lg text-sm text-[var(--ink-soft)]">
+              Explore a real dashboard — Abacus tracking its own website — before
+              you add your own domain below.
+            </p>
+          </div>
+          <span class="rounded-lg bg-abacus-600 px-5 py-2.5 text-sm font-medium text-white">
+            Open the live demo →
+          </span>
+        </a>
+      )
+    }
+
+    <!-- Add site -->
+    <form
+      method="POST"
+      class="mt-6 flex flex-col gap-3 rounded-xl border border-[var(--line)] p-5 sm:flex-row sm:items-center"
+    >
+      <label for="domain" class="text-sm font-medium text-[var(--ink-soft)]">
+        Add a site
+      </label>
+      <input
+        id="domain"
+        name="domain"
+        type="text"
+        required
+        placeholder="example.com"
+        class="flex-1 rounded-lg border border-[var(--line)] px-3 py-2 text-sm focus:border-abacus-500 focus:outline-none focus:ring-1 focus:ring-abacus-500"
+      />
+      <button
+        type="submit"
+        class="rounded-lg bg-abacus-600 px-4 py-2 text-sm font-medium text-white hover:bg-abacus-700"
+      >
+        Add site
+      </button>
+    </form>
+    {error && <p class="mt-2 text-sm text-red-600">{error}</p>}
+
+    <!-- Site list -->
+    <div class="mt-8">
+      {
+        sites.length === 0 ? (
+          <div class="rounded-xl border border-dashed border-[var(--line)] p-10 text-center">
+            <p class="text-[var(--ink-mute)]">
+              No sites of your own yet — add a domain above, or
+              <a href="/app/demo" class="text-abacus-600">explore the live demo</a>.
+            </p>
+          </div>
+        ) : (
+          <ul class="divide-y divide-[var(--line-soft)] rounded-xl border border-[var(--line)]">
+            {sites.map((s) => (
+              <li>
+                <a
+                  href={`/app/${s.id}`}
+                  class="flex items-center justify-between px-5 py-4 hover:bg-[var(--bg-2)]"
+                >
+                  <span class="font-medium">{s.domain}</span>
+                  <span class="text-sm text-abacus-600">View dashboard →</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    </div>
+  </main>
+</Layout>

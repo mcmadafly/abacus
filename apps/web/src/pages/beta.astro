@@ -1,0 +1,198 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+import { Resend } from "resend";
+
+export const prerender = false;
+
+const env = Astro.locals.runtime.env;
+
+let status: "idle" | "ok" | "error" = "idle";
+let message = "";
+let email = "";
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  email = String(form.get("email") ?? "").trim();
+
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    status = "error";
+    message = "Please enter a valid email address.";
+  } else {
+    const key = env.RESEND_API_KEY;
+    const audienceId = env.RESEND_AUDIENCE_ID;
+    const configured = Boolean(key && !key.includes("placeholder") && audienceId);
+
+    if (configured) {
+      try {
+        const resend = new Resend(key);
+        const res = await resend.contacts.create({
+          email,
+          audienceId,
+          unsubscribed: false,
+        });
+        if (res.error) throw new Error(res.error.message);
+        status = "ok";
+      } catch (err) {
+        console.error("early-access signup failed:", err);
+        status = "error";
+        message =
+          "Something went wrong adding you to the list — please try again, or email hello@abacuslytics.com.";
+      }
+    } else {
+      // Resend not configured locally — accept so the flow is testable in dev.
+      console.log("[early-access] (Resend not configured) would add:", email);
+      status = "ok";
+    }
+  }
+}
+---
+
+<Layout title="Join the Abacus beta">
+  <Nav />
+  <main class="betawrap">
+    <div class="hero__bg"></div>
+    <div class="hero__veil"></div>
+    <div class="beta">
+      {
+        status === "ok" ? (
+          <div class="beta__card beta__card--ok">
+            <div class="beta__check">✓</div>
+            <h1 class="beta__title">You're on the list.</h1>
+            <p class="beta__sub">
+              Thanks for joining the Abacus early-adopter list — we'll email{" "}
+              <strong>{email}</strong> as soon as your spot opens up.
+            </p>
+            <a href="/" class="btn btn--ghost">Back to home</a>
+          </div>
+        ) : (
+          <div class="beta__card">
+            <span class="eyebrow">
+              <span class="dot" />
+              Early beta
+            </span>
+            <h1 class="beta__title">
+              Be one of the <em>first</em> on Abacus.
+            </h1>
+            <p class="beta__sub">
+              We're opening Abacus to a small group of early adopters. Drop your
+              email and we'll send you an invite — plus a say in what we build next.
+            </p>
+            <form method="POST" class="beta__form">
+              <input
+                type="email"
+                name="email"
+                required
+                value={email}
+                placeholder="you@yourdomain.com"
+                class="beta__input"
+                aria-label="Email address"
+              />
+              <button type="submit" class="btn btn--dark btn--lg">
+                Request access <span class="arrow">→</span>
+              </button>
+            </form>
+            {status === "error" && <p class="beta__error">{message}</p>}
+            <p class="beta__fine">No spam, no cookies. Just one invite email.</p>
+          </div>
+        )
+      }
+    </div>
+  </main>
+  <Footer />
+</Layout>
+
+<style>
+  .betawrap {
+    position: relative;
+    flex: 1;
+    display: grid;
+    place-items: center;
+    padding: 80px 22px;
+    overflow: hidden;
+  }
+  .beta {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 560px;
+  }
+  .beta__card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-card);
+    padding: 40px;
+    text-align: center;
+  }
+  .beta__title {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(1.9rem, 3.4vw, 2.6rem);
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    margin-top: 16px;
+  }
+  .beta__title em {
+    font-style: italic;
+    color: var(--indigo);
+  }
+  .beta__sub {
+    color: var(--ink-soft);
+    margin-top: 12px;
+    line-height: 1.6;
+    text-wrap: pretty;
+  }
+  .beta__form {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+    flex-wrap: wrap;
+  }
+  .beta__input {
+    flex: 1;
+    min-width: 220px;
+    border: 1px solid var(--line);
+    background: var(--bg-2);
+    color: var(--ink);
+    border-radius: 999px;
+    padding: 13px 20px;
+    font-size: 1rem;
+    font-family: var(--sans);
+  }
+  .beta__input:focus {
+    outline: none;
+    border-color: var(--indigo);
+  }
+  .beta__form .btn {
+    flex: none;
+  }
+  .beta__error {
+    color: oklch(0.6 0.2 25);
+    font-size: 0.88rem;
+    margin-top: 12px;
+  }
+  .beta__fine {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--ink-mute);
+    margin-top: 16px;
+    letter-spacing: 0.02em;
+  }
+  .beta__card--ok .beta__check {
+    width: 52px;
+    height: 52px;
+    margin: 0 auto;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--iris-wash);
+    color: var(--indigo);
+    font-size: 1.4rem;
+    font-weight: 700;
+  }
+  .beta__card--ok .btn {
+    margin-top: 22px;
+  }
+</style>

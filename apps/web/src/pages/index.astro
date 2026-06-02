@@ -1,0 +1,801 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+import Pricing from "../components/Pricing.astro";
+import {
+  generateDemoStats,
+  summarize,
+  compact,
+  metricFigure,
+  METRIC_LABEL,
+  METRIC_UP_GOOD,
+  type Metric,
+} from "../lib/demoStats";
+import { randomName } from "../lib/names";
+import { randomGreeting } from "../lib/greetings";
+
+const greeting = randomGreeting(randomName());
+const DEFAULT_RANGE = 30;
+const data = generateDemoStats();
+const view = summarize(data, { range: DEFAULT_RANGE, metric: "visitors", page: null });
+
+const sign = (d: number) => (d >= 0 ? "↑" : "↓");
+const metrics: Metric[] = ["visitors", "pageviews", "bounce", "duration"];
+const statValue = (m: Metric) =>
+  m === "bounce"
+    ? `${view.totals.bounce}%`
+    : m === "duration"
+      ? view.totals.duration
+      : compact(view.totals[m]);
+const statCards = metrics.map((m) => ({
+  metric: m,
+  label: METRIC_LABEL[m],
+  value: statValue(m),
+  delta: view.deltas[m],
+  good: METRIC_UP_GOOD[m],
+}));
+
+const maxSource = Math.max(...view.topSources.map((s) => s.count));
+const maxPage = Math.max(...view.topPages.map((p) => p.count));
+const axisIdx = [0, 0.25, 0.5, 0.75, 1].map((f) =>
+  Math.min(view.chartLabels.length - 1, Math.round((view.chartLabels.length - 1) * f)),
+);
+
+const sourceColors: Record<string, string> = {
+  Google: "oklch(0.62 0.16 250)",
+  "Direct / None": "oklch(0.58 0.02 285)",
+  GitHub: "oklch(0.30 0.02 285)",
+  "Twitter / X": "oklch(0.22 0.01 285)",
+  "Hacker News": "oklch(0.66 0.18 45)",
+};
+const sourceInitials: Record<string, string> = {
+  Google: "G",
+  "Direct / None": "↗",
+  GitHub: "GH",
+  "Twitter / X": "X",
+  "Hacker News": "Y",
+};
+---
+
+<Layout>
+  <Nav />
+
+  <main id="top">
+    <!-- ============ HERO ============ -->
+    <section class="hero">
+      <div class="hero__bg"></div>
+      <div class="hero__photo"></div>
+      <div class="hero__hills"></div>
+      <div class="hero__veil"></div>
+      <div class="hero__grain"></div>
+
+      <div class="wrap hero__inner">
+        <span class="eyebrow hero__eyebrow"
+          ><span class="dot"></span>Lightweight · cookie-free · open source</span
+        >
+
+        <h1>
+          <span class="hl">Privacy-first analytics,</span><span class="hl"
+            ><em>delivered</em> to your <span class="leaf">inbox.</span></span
+          >
+        </h1>
+
+        <p class="hero__sub">
+          Abacus is a featherweight, cookie-free analytics tool that respects
+          your visitors — and emails you a clean, readable report every morning.
+          All the numbers that matter, none of the creepy tracking.
+        </p>
+
+        <div class="hero__cta">
+          <a href="/sign-up" class="btn btn--dark btn--lg"
+            >Start free <span class="arrow">→</span></a
+          >
+          <a href="#demo" class="btn btn--ghost btn--lg">View live demo</a>
+        </div>
+        <p class="hero__note">
+          Free 30-day trial · No cookie banner · No credit card · GDPR-ready
+        </p>
+
+        <!-- analytics dashboard mockup -->
+        <div class="hero__shot" id="demo">
+          <div class="dash">
+
+            <!-- main -->
+            <div class="dmain">
+              <div class="dtop">
+                <div class="dsite">
+                  <span class="dsite__fav" aria-hidden="true"
+                    ><svg viewBox="0 0 26 26" fill="none"
+                      ><g fill="#fff"
+                        ><circle cx="9" cy="8" r="2.3"></circle><circle
+                          cx="14.5"
+                          cy="8"
+                          r="2.3"></circle><circle cx="17.5" cy="13" r="2.3"
+                        ></circle><circle cx="8" cy="18" r="2.3"></circle><circle
+                          cx="19"
+                          cy="18"
+                          r="2.3"></circle></g
+                      ></svg
+                    ></span
+                  >
+                  abacuslytics.com <span class="caret">▾</span>
+                </div>
+                <label class="ddate">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"
+                    ><rect x="3" y="5" width="18" height="16" rx="2"></rect><path
+                      d="M3 9h18M8 3v4M16 3v4"></path></svg
+                  >
+                  <span data-range-label>Last 30 days</span>
+                  <span class="ddate__caret">▾</span>
+                  <select class="ddate__select" data-range aria-label="Date range">
+                    <option value="7">Last 7 days</option>
+                    <option value="14">Last 14 days</option>
+                    <option value="30" selected>Last 30 days</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="dhello">{greeting}</div>
+              <div class="dhello__sub">
+                <span data-hello
+                  >Here's how abacuslytics.com performed over the last 30 days.</span
+                >
+                <button type="button" class="dfilter" data-filter hidden>
+                  Filtered: <b data-filter-name></b><span class="dfilter__x">✕</span>
+                </button>
+              </div>
+
+              <!-- stat strip -->
+              <div class="dstats">
+                {
+                  statCards.map((s, i) => {
+                    const positive = s.good ? s.delta >= 0 : s.delta < 0;
+                    return (
+                      <button
+                        type="button"
+                        class={`dstat${i === 0 ? " is-active" : ""}`}
+                        data-metric={s.metric}
+                      >
+                        <div class="dstat__top">
+                          <span class="dstat__label">{s.label}</span>
+                          <span class="dstat__spark">
+                            <canvas data-spark={s.metric} width="46" height="18" />
+                          </span>
+                        </div>
+                        <div class="dstat__val" data-val={s.metric}>
+                          {s.value}
+                        </div>
+                        <div
+                          class={`dstat__delta${positive ? "" : " dn"}`}
+                          data-delta={s.metric}
+                        >
+                          {sign(s.delta)} {Math.abs(s.delta)}%
+                        </div>
+                      </button>
+                    );
+                  })
+                }
+              </div>
+
+              <!-- visitor trend chart -->
+              <div class="dchart">
+                <div class="dchart__head">
+                  <div class="dchart__metric">
+                    <span class="dchart__num" data-chart-num
+                      >{metricFigure(view, "visitors")}</span
+                    >
+                    <span class="dchart__cap" data-chart-cap
+                      >Unique visitors · last 30 days</span
+                    >
+                  </div>
+                  <div class="dchart__legend">
+                    <span class="dchart__tag on"
+                      ><span class="swat"></span><span data-legend>Visitors</span></span
+                    >
+                  </div>
+                </div>
+                <div class="dchart__plot">
+                  <canvas id="trendChart"></canvas>
+                </div>
+                <div class="dchart__axis" data-axis>
+                  {axisIdx.map((idx) => <span>{view.chartLabels[idx]}</span>)}
+                </div>
+              </div>
+
+              <!-- lower: top pages + top sources -->
+              <div class="dlower">
+                <div class="dpanel">
+                  <div class="dpanel__head">
+                    <span class="dpanel__title">Top pages</span><span
+                      class="dpanel__link">Click to filter</span
+                    >
+                  </div>
+                  <table class="dorders">
+                    <thead
+                      ><tr
+                        ><th>Page</th><th>Visitors</th><th class="r col-bounce"
+                          >Bounce</th
+                        ></tr
+                      ></thead
+                    >
+                    <tbody data-pages>
+                      {
+                        view.topPages.map((p) => (
+                          <tr data-page={p.name}>
+                            <td class="ono">{p.name}</td>
+                            <td>
+                              <span class="vis">
+                                <b data-page-count>{compact(p.count)}</b>
+                                <span class="cellbar">
+                                  <i
+                                    data-page-bar
+                                    style={`width:${Math.round((p.count / maxPage) * 100)}%`}
+                                  />
+                                </span>
+                              </span>
+                            </td>
+                            <td class="r tpct col-bounce" data-page-bounce>
+                              {p.bounce}%
+                            </td>
+                          </tr>
+                        ))
+                      }
+                    </tbody>
+                  </table>
+                </div>
+
+                <div class="dside-panel">
+                  <div class="dpanel__head">
+                    <span class="dpanel__title">Top sources</span>
+                  </div>
+                  <div data-sources>
+                    {
+                      view.topSources.map((s) => (
+                        <div class="dsrc" data-source={s.name}>
+                          <span
+                            class="dsrc__ico"
+                            style={`background:${sourceColors[s.name]}`}
+                          >
+                            {sourceInitials[s.name]}
+                          </span>
+                          <div class="dsrc__body">
+                            <div class="dsrc__top">
+                              <span class="dsrc__name">{s.name}</span>
+                              <span class="dsrc__val" data-source-count>
+                                {compact(s.count)}
+                              </span>
+                            </div>
+                            <div class="dsrc__bar">
+                              <i
+                                data-source-bar
+                                style={`width:${Math.round((s.count / maxSource) * 100)}%`}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- works-with strip on the violet -->
+      <div class="proof">
+        <div class="wrap">
+          <p class="proof__label">
+            Drops into any stack — one snippet, no tag manager
+          </p>
+          <div class="proof__row">
+            <span class="wm">Next.js</span>
+            <span class="wm serif">WordPress</span>
+            <span class="wm">Webflow</span>
+            <span class="wm mono">Astro</span>
+            <span class="wm serif">Ghost</span>
+            <span class="wm">Rails</span>
+            <span class="wm">Shopify</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ FEATURES ============ -->
+    <section class="sec" id="features">
+      <div class="wrap">
+        <div class="sec__head center reveal">
+          <span class="eyebrow"><span class="dot"></span>Why Abacus</span>
+          <h2>
+            Real numbers, zero noise,<br /><em
+              >and none of the creepy stuff.</em
+            >
+          </h2>
+          <p class="sec__lead">
+            Most analytics tools bury the truth under dashboards you'll never
+            open and cookies you have to apologize for. Abacus keeps it to the
+            metrics that matter — and brings them to you.
+          </p>
+        </div>
+
+        <div class="features">
+          <!-- wide: email digest -->
+          <div class="feature feature--wide reveal">
+            <div class="feature__body">
+              <div class="feature__ico">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"
+                  ><rect x="3" y="5" width="18" height="14" rx="2"></rect><path
+                    d="m3 7 9 6 9-6"></path></svg
+                >
+              </div>
+              <h3>Your morning numbers, in one email</h3>
+              <p>
+                Wake up to a clean daily (or weekly) digest — visitors, top
+                pages, where they came from, and what changed. No login, no
+                digging. The whole story in the time it takes to drink your
+                coffee.
+              </p>
+            </div>
+            <div class="inbox" aria-hidden="true">
+              <div class="inbox__head">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"
+                  ><rect x="3" y="5" width="18" height="14" rx="2"></rect><path
+                    d="m3 7 9 6 9-6"></path></svg
+                >
+                <span class="inbox__from">Abacus Daily · abacuslytics.com</span>
+                <span class="inbox__date">Mon, Jun 1</span>
+              </div>
+              <div class="inbox__row">
+                <span class="inbox__dot" style="background:oklch(0.52 0.19 278)"
+                ></span>
+                <div class="inbox__txt">
+                  <b>Unique visitors</b><span>↑ 12% vs yesterday</span>
+                </div>
+                <span class="inbox__price">1,284</span>
+              </div>
+              <div class="inbox__row">
+                <span class="inbox__dot" style="background:oklch(0.70 0.15 290)"
+                ></span>
+                <div class="inbox__txt">
+                  <b>Pageviews</b><span>↑ 8% vs yesterday</span>
+                </div>
+                <span class="inbox__price">3,902</span>
+              </div>
+              <div class="inbox__row is-muted">
+                <span class="inbox__dot" style="background:oklch(0.72 0.20 305)"
+                ></span>
+                <div class="inbox__txt">
+                  <b>Top source · Google</b><span>Top page · /pricing</span>
+                </div>
+                <span class="inbox__price">42%</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="feature reveal">
+            <div class="feature__ico">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"
+                ><path d="M13 2 4 14h7l-1 8 9-12h-7z"></path></svg
+              >
+            </div>
+            <h3>A script under 1&nbsp;KB</h3>
+            <p>
+              Abacus loads in a blink and never slows your site down. No bloated
+              bundles, no layout shift — just a tiny snippet that does its job
+              and gets out of the way.
+            </p>
+          </div>
+
+          <div class="feature reveal">
+            <div class="feature__ico">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"
+                ><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"></path><path
+                  d="m9 12 2 2 4-4"></path></svg
+              >
+            </div>
+            <h3>No cookies, no consent banners</h3>
+            <p>
+              We never use cookies or collect personal data, so there's nothing
+              to consent to. GDPR, CCPA and PECR friendly out of the box — your
+              visitors stay anonymous, you stay compliant.
+            </p>
+          </div>
+
+          <div class="feature reveal">
+            <div class="feature__ico">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"
+                ><rect x="3" y="3" width="18" height="18" rx="2"></rect><path
+                  d="M3 9h18M9 21V9"></path></svg
+              >
+            </div>
+            <h3>Everything on one page</h3>
+            <p>
+              The whole picture lives on a single screen — visitors, sources,
+              pages, countries, devices and goals. No endless menus, no report
+              builder, no training required.
+            </p>
+          </div>
+
+          <div class="feature reveal">
+            <div class="feature__ico">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"
+                ><circle cx="12" cy="12" r="8"></circle><circle
+                  cx="12"
+                  cy="12"
+                  r="3.5"></circle><path
+                  d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg
+              >
+            </div>
+            <h3>Goals &amp; events that matter</h3>
+            <p>
+              Track the signups, purchases and clicks that move the needle —
+              without tagging chaos. Set a goal in seconds and watch your
+              conversion rate in real time.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ HOW IT WORKS ============ -->
+    <section class="sec how" id="how">
+      <div class="wrap">
+        <div class="sec__head reveal">
+          <span class="eyebrow"><span class="dot"></span>How it works</span>
+          <h2>From snippet to inbox<br />in two minutes.</h2>
+        </div>
+        <div class="steps">
+          <div class="step reveal">
+            <div class="step__no">STEP 01</div>
+            <h3>Add one snippet</h3>
+            <p>
+              Drop a single lightweight line into your site — or install the
+              plugin for WordPress, Next.js, Ghost and more. No tag manager, no
+              cookie banner, no fuss.
+            </p>
+          </div>
+          <div class="step reveal">
+            <div class="step__no">STEP 02</div>
+            <h3>Watch it live</h3>
+            <p>
+              Visitors appear on your dashboard the instant they land — in real
+              time, on one clean page. Everything you need to read your traffic
+              at a glance.
+            </p>
+          </div>
+          <div class="step reveal">
+            <div class="step__no">STEP 03</div>
+            <h3>Get your daily email</h3>
+            <p>
+              Pick a time and cadence, and Abacus emails you a tidy report — so
+              you stay on top of your numbers without ever opening a dashboard.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ STATS BAND ============ -->
+    <section class="sec" id="trusted">
+      <div class="wrap">
+        <div class="band">
+          <div class="band__intro reveal">
+            Trusted by indie hackers, startups and privacy-minded teams <em
+              style="color:var(--indigo)">in 60+ countries.</em
+            >
+          </div>
+          <div class="reveal">
+            <div class="metric__num"><em>14</em>B</div>
+            <div class="metric__label">Events counted / mo</div>
+          </div>
+          <div class="reveal">
+            <div class="metric__num"><em>9.8</em>k</div>
+            <div class="metric__label">Sites measured</div>
+          </div>
+          <div class="reveal">
+            <div class="metric__num"><em>0</em></div>
+            <div class="metric__label">Cookies set, ever</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PRICING ============ -->
+    <Pricing />
+
+    <!-- ============ FINAL CTA ============ -->
+    <section class="sec" style="padding-top:0">
+      <div class="wrap">
+        <div class="cta-final reveal">
+          <div class="cta-final__glow"></div>
+          <span
+            class="eyebrow"
+            style="background:oklch(1 0 0 / 0.1);border-color:oklch(1 0 0 / 0.18);color:var(--iris)"
+            ><span class="dot" style="background:var(--iris)"></span>Free 30-day
+            trial</span
+          >
+          <h2>See your traffic <em>clearly.</em></h2>
+          <p>
+            Set up Abacus in two minutes, watch the numbers roll in, and wake up
+            to your first report tomorrow. No cookies, no contracts, no nonsense.
+          </p>
+          <div class="cta-final__btns">
+            <a href="/sign-up" class="btn btn--cream btn--lg"
+              >Start free <span class="arrow">→</span></a
+            >
+            <a href="#demo" class="btn btn--outline btn--lg">View live demo</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script
+    type="application/json"
+    id="demo-data"
+    is:inline
+    set:html={JSON.stringify(data)}
+  />
+
+  <Footer />
+
+  <script is:inline>
+    // reveal on scroll
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.classList.add("in");
+            io.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" },
+    );
+    document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+
+    // Force a hero headline relayout once the webfont loads (avoids a Chromium
+    // font-swap reflow bug where the box keeps the fallback font's line count).
+    function relayoutHeadline() {
+      const h = document.querySelector(".hero h1");
+      if (!h) return;
+      const fs = h.style.fontSize;
+      h.style.fontSize = "1px";
+      void h.offsetWidth;
+      h.style.fontSize = fs;
+    }
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => {
+        relayoutHeadline();
+        setTimeout(relayoutHeadline, 250);
+      });
+    }
+    window.addEventListener("load", () => setTimeout(relayoutHeadline, 100));
+  </script>
+
+  <script>
+    // Interactive hero demo: stat cards switch the chart metric, the range
+    // selector re-windows, and clicking a top page filters everything.
+    import {
+      Chart,
+      LineController,
+      LineElement,
+      PointElement,
+      BarController,
+      BarElement,
+      LinearScale,
+      CategoryScale,
+      Filler,
+      Tooltip,
+    } from "chart.js";
+    import {
+      summarize,
+      metricFigure,
+      compact,
+      METRIC_LABEL,
+      METRIC_UP_GOOD,
+      type DemoData,
+      type Metric,
+    } from "../lib/demoStats";
+
+    Chart.register(
+      LineController, LineElement, PointElement,
+      BarController, BarElement,
+      LinearScale, CategoryScale, Filler, Tooltip,
+    );
+
+    const dataEl = document.getElementById("demo-data");
+    const data = JSON.parse(dataEl?.textContent || "{}") as DemoData;
+    const metrics: Metric[] = ["visitors", "pageviews", "bounce", "duration"];
+    const state: { range: number; metric: Metric; page: string | null } = {
+      range: 30,
+      metric: "visitors",
+      page: null,
+    };
+
+    // --- chart instances (created once, updated on every state change) ---
+    const trendCanvas = document.getElementById("trendChart") as HTMLCanvasElement | null;
+    let trend: Chart | null = null;
+    if (trendCanvas) {
+      const ctx = trendCanvas.getContext("2d")!;
+      const grad = ctx.createLinearGradient(0, 0, 0, 168);
+      grad.addColorStop(0, "rgba(91,70,229,0.30)");
+      grad.addColorStop(1, "rgba(91,70,229,0)");
+      trend = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: [],
+          datasets: [{
+            data: [], borderColor: "#5b46e5", borderWidth: 2.2,
+            backgroundColor: grad, fill: true, tension: 0.4,
+            pointRadius: 0, pointHoverRadius: 4,
+            pointHoverBackgroundColor: "#fff", pointHoverBorderColor: "#5b46e5",
+            pointHoverBorderWidth: 2.4,
+          }],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          animation: { duration: 450 },
+          interaction: { intersect: false, mode: "index" },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              displayColors: false, backgroundColor: "rgba(20,18,40,0.92)", padding: 8,
+              callbacks: {
+                title: (items) => items[0]?.label ?? "",
+                label: (c) => (c.parsed.y ?? 0).toLocaleString(),
+              },
+            },
+          },
+          scales: {
+            x: { display: false },
+            y: { display: false, beginAtZero: true, grace: "12%" },
+          },
+        },
+      });
+    }
+
+    const sparks: Record<string, Chart> = {};
+    document.querySelectorAll("canvas[data-spark]").forEach((cvEl) => {
+      const cv = cvEl as HTMLCanvasElement;
+      const key = cv.getAttribute("data-spark")!;
+      sparks[key] = new Chart(cv.getContext("2d")!, {
+        type: "bar",
+        data: { labels: [], datasets: [{ data: [], backgroundColor: [], borderRadius: 2, barPercentage: 0.72, categoryPercentage: 0.86 }] },
+        options: {
+          responsive: false, animation: false,
+          plugins: { legend: { display: false }, tooltip: { enabled: false } },
+          scales: { x: { display: false }, y: { display: false, beginAtZero: true, grace: "8%" } },
+        },
+      });
+    });
+
+    function render() {
+      const view = summarize(data, state);
+      const rangeLabel = `last ${state.range} days`;
+
+      // stat cards: value, delta, sparkline, active state
+      metrics.forEach((m) => {
+        let valText: string;
+        if (m === "bounce") valText = view.totals.bounce + "%";
+        else if (m === "duration") valText = view.totals.duration;
+        else valText = compact(view.totals[m]);
+
+        const valEl = document.querySelector(`[data-val="${m}"]`);
+        if (valEl) valEl.textContent = valText;
+
+        const deltaEl = document.querySelector(`[data-delta="${m}"]`);
+        if (deltaEl) {
+          const d = view.deltas[m];
+          const positive = METRIC_UP_GOOD[m] ? d >= 0 : d < 0;
+          deltaEl.textContent = `${d >= 0 ? "↑" : "↓"} ${Math.abs(d)}%`;
+          deltaEl.classList.toggle("dn", !positive);
+        }
+
+        const sc = sparks[m];
+        const ds = sc?.data.datasets[0];
+        if (sc && ds) {
+          const vals = view.spark[m];
+          sc.data.labels = vals.map((_, i) => i);
+          ds.data = vals;
+          (ds as unknown as { backgroundColor: string[] }).backgroundColor = vals.map((_, i) =>
+            i === vals.length - 1 ? "#b07bff" : "rgba(255,255,255,0.32)",
+          );
+          sc.update();
+        }
+      });
+
+      document.querySelectorAll("[data-metric]").forEach((c) =>
+        c.classList.toggle("is-active", c.getAttribute("data-metric") === state.metric),
+      );
+
+      // main chart
+      if (trend) {
+        trend.data.labels = view.chartLabels;
+        const tds = trend.data.datasets[0];
+        if (tds) tds.data = view.chartValues;
+        trend.update();
+      }
+      const numEl = document.querySelector("[data-chart-num]");
+      if (numEl) numEl.textContent = metricFigure(view, state.metric);
+      const capEl = document.querySelector("[data-chart-cap]");
+      if (capEl) capEl.textContent = `${METRIC_LABEL[state.metric]} · ${rangeLabel}`;
+      const legendEl = document.querySelector("[data-legend]");
+      if (legendEl) legendEl.textContent = METRIC_LABEL[state.metric];
+      const rangeLbl = document.querySelector("[data-range-label]");
+      if (rangeLbl) rangeLbl.textContent = `Last ${state.range} days`;
+
+      const axis = document.querySelector("[data-axis]");
+      if (axis) {
+        const n = view.chartLabels.length;
+        axis.innerHTML = [0, 0.25, 0.5, 0.75, 1]
+          .map((f) => view.chartLabels[Math.min(n - 1, Math.round((n - 1) * f))])
+          .map((d) => `<span>${d}</span>`)
+          .join("");
+      }
+
+      // top pages
+      const maxPage = Math.max(1, ...view.topPages.map((p) => p.count));
+      document.querySelectorAll("[data-page]").forEach((row) => {
+        const p = view.topPages.find((x) => x.name === row.getAttribute("data-page"));
+        if (!p) return;
+        const cnt = row.querySelector("[data-page-count]");
+        const bar = row.querySelector("[data-page-bar]") as HTMLElement | null;
+        const bnc = row.querySelector("[data-page-bounce]");
+        if (cnt) cnt.textContent = compact(p.count);
+        if (bar) bar.style.width = `${Math.round((p.count / maxPage) * 100)}%`;
+        if (bnc) bnc.textContent = `${p.bounce}%`;
+        row.classList.toggle("is-active", p.name === state.page);
+      });
+
+      // top sources
+      const maxSrc = Math.max(1, ...view.topSources.map((s) => s.count));
+      document.querySelectorAll("[data-source]").forEach((row) => {
+        const s = view.topSources.find((x) => x.name === row.getAttribute("data-source"));
+        if (!s) return;
+        const cnt = row.querySelector("[data-source-count]");
+        const bar = row.querySelector("[data-source-bar]") as HTMLElement | null;
+        if (cnt) cnt.textContent = compact(s.count);
+        if (bar) bar.style.width = `${Math.round((s.count / maxSrc) * 100)}%`;
+      });
+
+      // subtitle + filter chip
+      const hello = document.querySelector("[data-hello]");
+      if (hello) hello.textContent = `Here's how abacuslytics.com performed over the ${rangeLabel}.`;
+      const chip = document.querySelector("[data-filter]") as HTMLElement | null;
+      const chipName = document.querySelector("[data-filter-name]");
+      if (chip) {
+        chip.hidden = !state.page;
+        if (state.page && chipName) chipName.textContent = state.page;
+      }
+    }
+
+    // --- wiring ---
+    document.querySelectorAll("[data-metric]").forEach((card) =>
+      card.addEventListener("click", () => {
+        state.metric = card.getAttribute("data-metric") as Metric;
+        render();
+      }),
+    );
+    const rangeSel = document.querySelector("[data-range]") as HTMLSelectElement | null;
+    rangeSel?.addEventListener("change", () => {
+      state.range = Number(rangeSel.value);
+      render();
+    });
+    document.querySelectorAll("[data-page]").forEach((row) =>
+      row.addEventListener("click", () => {
+        const name = row.getAttribute("data-page");
+        state.page = state.page === name ? null : name;
+        render();
+      }),
+    );
+    document.querySelector("[data-filter]")?.addEventListener("click", () => {
+      state.page = null;
+      render();
+    });
+
+    render();
+  </script>
+</Layout>

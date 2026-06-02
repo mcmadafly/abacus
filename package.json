@@ -1,0 +1,29 @@
+{
+  "name": "abacus",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Abacus — real analytics, sent to your inbox every day.",
+  "license": "AGPL-3.0-only",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "bun run tracker:build && bun run --filter='@abacus/web' dev",
+    "build": "bun run tracker:build && bun run --filter='@abacus/web' build",
+    "deploy": "bun run build && bun run --filter='@abacus/web' deploy",
+    "tracker:build": "bun run --filter='@abacus/tracker' build",
+    "db:generate": "bun run --filter='@abacus/db' generate",
+    "db:migrate": "bun run --filter='@abacus/web' db:migrate",
+    "db:seed": "bun run --filter='@abacus/web' db:seed",
+    "db:demo": "bun run --filter='@abacus/web' db:demo",
+    "typecheck": "bun run --filter='@abacus/web' typecheck"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  },
+  "trustedDependencies": [
+    "@clerk/shared"
+  ]
+}

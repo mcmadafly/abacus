@@ -1,0 +1,176 @@
+---
+const tiers = [
+  {
+    name: "Hobby",
+    price: "$0",
+    cadence: "/mo",
+    blurb: "For personal sites and side projects.",
+    features: [
+      "Up to 10k pageviews/mo",
+      "1 site",
+      "Daily email digest",
+      "Live dashboard",
+    ],
+    cta: "Start free",
+    highlight: false,
+  },
+  {
+    name: "Growth",
+    price: "$9",
+    cadence: "/mo",
+    blurb: "For makers and growing businesses.",
+    features: [
+      "Up to 1M pageviews/mo",
+      "Unlimited sites",
+      "Daily + weekly digests",
+      "Custom events & goals",
+      "2 years of history",
+    ],
+    cta: "Start 30-day trial",
+    highlight: true,
+  },
+  {
+    name: "Scale",
+    price: "$29",
+    cadence: "/mo",
+    blurb: "For high-traffic sites and teams.",
+    features: [
+      "Up to 10M pageviews/mo",
+      "Team members",
+      "API access",
+      "Priority support",
+      "Data export",
+    ],
+    cta: "Start 30-day trial",
+    highlight: false,
+  },
+];
+---
+
+<section class="sec" id="pricing">
+  <div class="wrap">
+    <div class="sec__head center reveal">
+      <span class="eyebrow"><span class="dot"></span>Pricing</span>
+      <h2>Simple, <em>honest</em> pricing.</h2>
+      <p class="sec__lead">
+        Pay for the traffic you have — no per-seat gouging, cancel any time.
+        Every plan includes the daily email digest and cookie-free tracking.
+      </p>
+    </div>
+
+    <div class="tiers">
+      {
+        tiers.map((t) => (
+          <div class={`tier${t.highlight ? " tier--hl" : ""} reveal`}>
+            {t.highlight && <span class="tier__tag">Most popular</span>}
+            <h3 class="tier__name">{t.name}</h3>
+            <p class="tier__blurb">{t.blurb}</p>
+            <p class="tier__price">
+              <span class="tier__amount">{t.price}</span>
+              <span class="tier__cadence">{t.cadence}</span>
+            </p>
+            <a
+              href="/sign-up"
+              class={`btn ${t.highlight ? "btn--dark" : "btn--ghost"}`}
+              style="width:100%;justify-content:center"
+            >
+              {t.cta} <span class="arrow">→</span>
+            </a>
+            <ul class="tier__list">
+              {t.features.map((f) => (
+                <li>
+                  <span class="tier__check">✓</span>
+                  {f}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .tiers {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin-top: 52px;
+  }
+  .tier {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 30px;
+    box-shadow: var(--shadow-soft);
+  }
+  .tier--hl {
+    border-color: var(--indigo);
+    box-shadow: var(--shadow-card);
+  }
+  .tier__tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #fff;
+    background: var(--indigo);
+    padding: 4px 10px;
+    border-radius: 999px;
+    margin-bottom: 16px;
+  }
+  .tier__name {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 1.5rem;
+    letter-spacing: -0.01em;
+  }
+  .tier__blurb {
+    color: var(--ink-mute);
+    font-size: 0.9rem;
+    margin-top: 4px;
+  }
+  .tier__price {
+    margin: 22px 0;
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+  }
+  .tier__amount {
+    font-family: var(--serif);
+    font-size: 2.8rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+  .tier__cadence {
+    color: var(--ink-mute);
+    font-family: var(--mono);
+    font-size: 0.8rem;
+  }
+  .tier__list {
+    list-style: none;
+    margin-top: 24px;
+    display: grid;
+    gap: 11px;
+  }
+  .tier__list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    font-size: 0.94rem;
+    color: var(--ink-soft);
+  }
+  .tier__check {
+    color: var(--indigo);
+    font-weight: 700;
+  }
+  @media (max-width: 980px) {
+    .tiers {
+      grid-template-columns: 1fr;
+      max-width: 460px;
+      margin-inline: auto;
+    }
+  }
+</style>

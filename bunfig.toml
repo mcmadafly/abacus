@@ -1,0 +1,3 @@
+[install]
+# Hoist deps to the workspace root for faster, deduplicated installs.
+linker = "hoisted"

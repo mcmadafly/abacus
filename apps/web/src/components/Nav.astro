@@ -1,0 +1,40 @@
+---
+import BrandMark from "./BrandMark.astro";
+import ThemeToggle from "./ThemeToggle.astro";
+---
+
+<a class="topbar" href="/beta">
+  <span class="topbar__tag">Early beta</span>
+  <span>We're looking for early adopters — join the list <span class="arrow">→</span></span>
+</a>
+
+<header class="nav" id="nav">
+  <div class="wrap nav__inner">
+    <a class="brand" href="/" aria-label="Abacus home">
+      <span class="brand__mark"><BrandMark /></span>
+      <span class="brand__name">Abacus</span>
+    </a>
+    <nav class="nav__links">
+      <a href="/#features">Features</a>
+      <a href="/#how">How it works</a>
+      <a href="/#demo">Live demo</a>
+      <a href="/#pricing">Pricing</a>
+    </nav>
+    <div class="nav__right">
+      <ThemeToggle />
+      <a href="/sign-in" class="nav__login">Sign in</a>
+      <a href="/sign-up" class="btn btn--dark">Start free <span class="arrow">→</span></a>
+    </div>
+  </div>
+</header>
+
+<script is:inline>
+  // nav gains a hairline border + stronger blur once scrolled
+  (function () {
+    const nav = document.getElementById("nav");
+    if (!nav) return;
+    const onScroll = () => nav.classList.toggle("scrolled", window.scrollY > 12);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+  })();
+</script>

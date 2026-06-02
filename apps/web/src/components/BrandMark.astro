@@ -1,0 +1,28 @@
+---
+// The Abacus logo: rounded indigo tile with three rails of beads.
+interface Props {
+  size?: number;
+}
+const { size = 27 } = Astro.props;
+---
+
+<svg viewBox="0 0 27 27" width={size} height={size} fill="none" aria-hidden="true">
+  <rect x="1" y="1" width="25" height="25" rx="7.5" fill="oklch(0.52 0.19 278)"></rect>
+  <g
+    stroke="oklch(0.99 0.01 285)"
+    stroke-width="1.2"
+    opacity="0.5"
+    stroke-linecap="round"
+  >
+    <line x1="5" y1="8.5" x2="22" y2="8.5"></line>
+    <line x1="5" y1="13.5" x2="22" y2="13.5"></line>
+    <line x1="5" y1="18.5" x2="22" y2="18.5"></line>
+  </g>
+  <g fill="oklch(0.99 0.01 285)">
+    <circle cx="9.5" cy="8.5" r="2.4"></circle>
+    <circle cx="15" cy="8.5" r="2.4"></circle>
+    <circle cx="18" cy="13.5" r="2.4" fill="oklch(0.72 0.20 305)"></circle>
+    <circle cx="8" cy="18.5" r="2.4"></circle>
+    <circle cx="19.5" cy="18.5" r="2.4"></circle>
+  </g>
+</svg>

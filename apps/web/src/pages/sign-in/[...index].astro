@@ -1,0 +1,33 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Nav from "../../components/Nav.astro";
+import { SignIn } from "@clerk/astro/components";
+import { clerkAppearance } from "../../lib/clerkAppearance";
+import { AUTH_DISABLED } from "../../lib/auth";
+
+export const prerender = false;
+
+// With auth disabled there's no sign-in to do — go straight to the dashboard.
+if (AUTH_DISABLED) return Astro.redirect("/app");
+
+// Already signed in? The <SignIn> widget renders nothing for an active session,
+// which looks like a blank page — so send them to the dashboard instead.
+const { userId } = Astro.locals.auth();
+if (userId) return Astro.redirect("/app");
+---
+
+<Layout title="Sign in — Abacus">
+  <Nav />
+  <main class="authwrap">
+    <div class="hero__bg"></div>
+    <div class="hero__grid"></div>
+    <div style="position:relative;z-index:2">
+      <SignIn
+        path="/sign-in"
+        signUpUrl="/sign-up"
+        forceRedirectUrl="/app"
+        appearance={clerkAppearance}
+      />
+    </div>
+  </main>
+</Layout>

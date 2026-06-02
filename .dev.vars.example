@@ -1,0 +1,19 @@
+# Copy to apps/web/.dev.vars and fill in. Never commit the real file.
+
+# Clerk (https://dashboard.clerk.com → API Keys)
+PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_xxx
+CLERK_SECRET_KEY=sk_test_xxx
+
+# Resend (https://resend.com → API Keys)
+RESEND_API_KEY=re_xxx
+# Resend Audience to add early-adopter signups to (Audiences → your audience → ID)
+RESEND_AUDIENCE_ID=
+DIGEST_FROM_EMAIL=Abacus <reports@yourdomain.com>
+
+# Cloudflare account — needed to QUERY Analytics Engine via the SQL API.
+# (Analytics Engine has no local query support; writes work locally as a no-op.)
+CF_ACCOUNT_ID=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+CF_AE_API_TOKEN=xxx
+
+# Secret salt for the daily-rotating, non-reversible visitor hash.
+VISITOR_HASH_SALT=change-me-to-a-long-random-string
