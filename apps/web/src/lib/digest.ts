@@ -5,7 +5,7 @@
  * Invoked from the Worker's `scheduled` handler (src/worker.ts).
  */
 import { eq } from "drizzle-orm";
-import { Resend } from "resend";
+import { resendSendEmail } from "./resend";
 import {
   createDb,
   digestSubscriptions,
@@ -28,7 +28,6 @@ export async function runDailyDigest(
   const day = yesterday.toISOString().slice(0, 10);
 
   const allSites = await db.select().from(sites);
-  const resend = new Resend(env.RESEND_API_KEY);
 
   for (const site of allSites) {
     try {
@@ -54,7 +53,7 @@ export async function runDailyDigest(
       const html = renderDigestEmail(site, day, stats);
       const subject = `${site.domain}: ${stats.visitors.toLocaleString()} visitors yesterday`;
 
-      await resend.emails.send({
+      await resendSendEmail(env.RESEND_API_KEY, {
         from: env.DIGEST_FROM_EMAIL,
         to: recipients,
         subject,

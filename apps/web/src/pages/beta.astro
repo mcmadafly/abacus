@@ -2,7 +2,7 @@
 import Layout from "../layouts/Layout.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
-import { Resend } from "resend";
+import { resendAddContact, resendConfigured } from "../lib/resend";
 
 export const prerender = false;
 
@@ -22,17 +22,10 @@ if (Astro.request.method === "POST") {
   } else {
     const key = env.RESEND_API_KEY;
     const audienceId = env.RESEND_AUDIENCE_ID;
-    const configured = Boolean(key && !key.includes("placeholder") && audienceId);
 
-    if (configured) {
+    if (resendConfigured(key, audienceId)) {
       try {
-        const resend = new Resend(key);
-        const res = await resend.contacts.create({
-          email,
-          audienceId,
-          unsubscribed: false,
-        });
-        if (res.error) throw new Error(res.error.message);
+        await resendAddContact(key, audienceId, email);
         status = "ok";
       } catch (err) {
         console.error("early-access signup failed:", err);

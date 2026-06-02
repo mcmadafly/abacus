@@ -1,8 +1,33 @@
 // @ts-check
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "astro/config";
 import cloudflare from "@astrojs/cloudflare";
 import clerk from "@clerk/astro";
 import tailwindcss from "@tailwindcss/vite";
+
+// Only wire up Clerk when auth is actually enabled. In the launch "waitlist"
+// build (no PUBLIC_AUTH_ENABLED) we skip it — its injected client script
+// references `document` and breaks the Cloudflare Worker at startup, and auth
+// routes redirect to /beta anyway. `astro dev` always includes it.
+const isBuild = process.argv.includes("build");
+const withClerk = process.env.PUBLIC_AUTH_ENABLED === "true" || !isBuild;
+
+// When Clerk is omitted, alias its UI components to no-op stubs and stub the
+// virtual config it would otherwise provide, so the existing imports still build.
+const clerkStub = {
+  name: "clerk-noop",
+  enforce: /** @type {const} */ ("pre"),
+  resolveId(/** @type {string} */ id) {
+    if (id === "virtual:@clerk/astro/config") return "\0clerk-noop-config";
+    return null;
+  },
+  load(/** @type {string} */ id) {
+    if (id === "\0clerk-noop-config") return "export default {};";
+    return null;
+  },
+};
+const noop = (/** @type {string} */ p) =>
+  fileURLToPath(new URL(p, import.meta.url));
 
 // https://astro.build/config
 export default defineConfig({
@@ -21,8 +46,16 @@ export default defineConfig({
     // into dist/_worker.js/index.js (the `main` in wrangler.jsonc).
     workerEntryPoint: { path: "src/worker.ts" },
   }),
-  integrations: [clerk()],
+  integrations: withClerk ? [clerk()] : [],
   vite: {
-    plugins: [tailwindcss()],
+    plugins: withClerk ? [tailwindcss()] : [tailwindcss(), clerkStub],
+    resolve: withClerk
+      ? {}
+      : {
+          alias: {
+            "@clerk/astro/components": noop("./src/clerk-noop/components.ts"),
+            "@clerk/astro/server": noop("./src/clerk-noop/server.ts"),
+          },
+        },
   },
 });

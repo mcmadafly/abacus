@@ -84,7 +84,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
     visitor,
   });
 
-  writeEvent(env.AE, dims);
+  // AE may be unbound if the dataset isn't enabled yet — accept the hit either way.
+  if (env.AE) writeEvent(env.AE, dims);
 
   return new Response(null, { status: 202, headers: NO_STORE });
 };
