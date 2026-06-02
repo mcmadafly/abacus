@@ -44,10 +44,10 @@ import { START_HREF, WAITLIST } from "../lib/site";
             {/* Signed in (hydrates client-side; reveals when a session is present,
                 which then hides the signed-out CTAs via the :has() rule below) */}
             <SignedIn isStatic class="nav__signed-in">
+              <UserButton appearance={clerkAppearance} />
               <a href="/app" class="btn btn--dark">
                 Dashboard <span class="arrow">→</span>
               </a>
-              <UserButton appearance={clerkAppearance} />
             </SignedIn>
           </div>
         )
