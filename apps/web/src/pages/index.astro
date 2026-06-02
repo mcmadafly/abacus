@@ -14,6 +14,7 @@ import {
 } from "../lib/demoStats";
 import { randomName } from "../lib/names";
 import { randomGreeting } from "../lib/greetings";
+import { START_HREF } from "../lib/site";
 
 const greeting = randomGreeting(randomName());
 const DEFAULT_RANGE = 30;
@@ -88,7 +89,7 @@ const sourceInitials: Record<string, string> = {
         </p>
 
         <div class="hero__cta">
-          <a href="/sign-up" class="btn btn--dark btn--lg"
+          <a href={START_HREF} class="btn btn--dark btn--lg"
             >Start free <span class="arrow">→</span></a
           >
           <a href="#demo" class="btn btn--ghost btn--lg">View live demo</a>
@@ -522,7 +523,7 @@ const sourceInitials: Record<string, string> = {
             to your first report tomorrow. No cookies, no contracts, no nonsense.
           </p>
           <div class="cta-final__btns">
-            <a href="/sign-up" class="btn btn--cream btn--lg"
+            <a href={START_HREF} class="btn btn--cream btn--lg"
               >Start free <span class="arrow">→</span></a
             >
             <a href="#demo" class="btn btn--outline btn--lg">View live demo</a>
