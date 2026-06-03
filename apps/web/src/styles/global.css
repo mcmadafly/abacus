@@ -676,8 +676,12 @@ section { position: relative; }
 .appside .dside__label:first-child { padding-top: 0; }
 .appside__dom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .appside__empty { color: var(--ink-mute); font-size: 0.82rem; padding: 4px 10px 8px; }
-.appside__digestform { margin: 0; }
-.dnav--btn { width: 100%; appearance: none; background: transparent; border: 0; font: inherit; cursor: pointer; text-align: left; }
+.appside__digest { margin: 10px 6px 2px; padding: 12px 13px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg-2); }
+.appside__digesttitle { font-size: 0.84rem; font-weight: 600; color: var(--ink); }
+.appside__digesttext { margin-top: 3px; font-size: 0.72rem; line-height: 1.4; color: var(--ink-mute); }
+.appside__digestbtn { margin-top: 11px; width: 100%; appearance: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); color: var(--ink); font: inherit; font-size: 0.78rem; font-weight: 500; transition: border-color .15s, color .15s, background .15s; }
+.appside__digestbtn:hover { border-color: var(--indigo); color: var(--indigo-d); background: var(--iris-wash); }
+.appside__digestbtn svg { width: 15px; height: 15px; stroke: currentColor; flex: none; }
 .appside__foot { margin-top: auto; padding-top: 18px; }
 .appside__usage { padding: 0 10px 12px; }
 .appside__usagetop { display: flex; align-items: baseline; justify-content: space-between; font-size: 0.82rem; font-weight: 600; color: var(--ink); }

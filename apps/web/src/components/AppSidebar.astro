@@ -84,14 +84,18 @@ const over = usage ? usage.used > usage.included : false;
   </a>
   {
     previewSiteId && (
-      <form method="POST" action="/app/preview-digest" class="appside__digestform">
+      <form method="POST" action="/app/preview-digest" class="appside__digest">
         <input type="hidden" name="site" value={previewSiteId} />
-        <button type="submit" class="dnav dnav--btn">
+        <p class="appside__digesttitle">Daily digest</p>
+        <p class="appside__digesttext">
+          Preview tomorrow's email with today's stats.
+        </p>
+        <button type="submit" class="appside__digestbtn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <rect x="3" y="5" width="18" height="14" rx="2" />
             <path d="m3 7 9 6 9-6" />
           </svg>
-          <span class="appside__dom">Email me a digest preview</span>
+          Email me a preview
         </button>
       </form>
     )
