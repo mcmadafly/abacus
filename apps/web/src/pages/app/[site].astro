@@ -76,6 +76,13 @@ const axisIdx = Array.from({ length: 5 }, (_, i) =>
   Math.min(series.length - 1, Math.round(((series.length - 1) * i) / 4)),
 );
 
+// A sparkline / delta is only meaningful once there are a few days of data —
+// below that we show blank placeholder bars instead of a misleading spike.
+const daysWithData = series.filter(
+  (s) => s.pageviews > 0 || s.visitors > 0,
+).length;
+const enoughTrend = daysWithData >= 3;
+
 const compact = (n: number) =>
   n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}k` : String(n);
 const vpv = (pv: number, vis: number) => (vis ? pv / vis : 0);
@@ -191,16 +198,26 @@ const chartData = JSON.stringify({
             <div class="dstat">
               <div class="dstat__top">
                 <span class="dstat__label">{c.label}</span>
-                {hasData && (
+                {enoughTrend ? (
                   <span class="dstat__spark">
                     <canvas data-spark={c.metric} width="46" height="18" />
+                  </span>
+                ) : (
+                  <span class="dstat__spark dspark-ph" aria-hidden="true">
+                    {Array.from({ length: 9 }).map(() => (
+                      <i />
+                    ))}
                   </span>
                 )}
               </div>
               <div class="dstat__val">{c.value}</div>
-              {hasData && (
+              {enoughTrend ? (
                 <div class={`dstat__delta${c.delta < 0 ? " dn" : ""}`}>
                   {fmtDelta(c.delta)} vs prev {days}d
+                </div>
+              ) : (
+                <div class="dstat__delta dstat__delta--muted">
+                  Collecting data…
                 </div>
               )}
             </div>

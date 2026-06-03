@@ -36,6 +36,12 @@ const {
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
+    <meta property="og:url" content={Astro.url.href} />
+    <meta property="og:image" content={new URL("/og.jpg", Astro.url).href} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content={new URL("/og.jpg", Astro.url).href} />
     <!-- Abacus eats its own dog food: the marketing site is tracked by Abacus
          itself, feeding the public "live demo" dashboard. data-allow-local lets
          it record during local dev; we skip the app/auth/api routes. -->

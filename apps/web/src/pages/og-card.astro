@@ -1,0 +1,251 @@
+---
+// Source page for the social share image. Rendered at exactly 1200×630 and
+// captured to /public/og.png by scripts/og.sh (headless Chrome). Not linked
+// anywhere; it just needs to be reachable during the capture.
+import "../styles/global.css";
+import BrandMark from "../components/BrandMark.astro";
+
+const stats = [
+  { label: "Unique visitors", value: "29.7k", delta: "↑ 22.8%" },
+  { label: "Pageviews", value: "83.7k", delta: "↑ 20.2%" },
+  { label: "Bounce rate", value: "44%", delta: "↓ 2.3%" },
+  { label: "Visit duration", value: "2m 28s", delta: "↑ 14.5%" },
+];
+---
+
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Abacus — OG</title>
+  </head>
+  <body class="og">
+    <div class="og__glow"></div>
+    <div class="og__grid"></div>
+
+    <div class="og__copy">
+      <div class="og__brand">
+        <span class="og__mark"><BrandMark size={46} /></span>
+        <span class="og__name">Abacus</span>
+      </div>
+      <h1 class="og__head">
+        Privacy-first analytics,<br /><em>delivered to your inbox.</em>
+      </h1>
+      <p class="og__sub">
+        Cookie-free, featherweight web analytics — with a clean report in your
+        inbox every morning.
+      </p>
+      <div class="og__tags">
+        <span>● Lightweight</span><span>Cookie-free</span><span>Open source</span>
+      </div>
+    </div>
+
+    <!-- angled product mock -->
+    <div class="og__stage">
+      <div class="dash og__dash">
+        <div class="dmain">
+          <div class="dtop">
+            <div class="dsite">
+              <span class="dsite__fav">
+                <svg viewBox="0 0 26 26" fill="none"
+                  ><g fill="#fff"
+                    ><circle cx="9" cy="9" r="2.2"></circle><circle
+                      cx="15"
+                      cy="9"
+                      r="2.2"></circle><circle cx="17" cy="14" r="2.2"
+                    ></circle><circle cx="8" cy="18" r="2.2"></circle></g
+                  ></svg
+                >
+              </span>
+              abacuslytics.com <span class="caret">▾</span>
+            </div>
+            <span class="ddate">Last 30 days <span class="ddate__caret">▾</span></span>
+          </div>
+          <div class="dhello">Onwards and upwards, Yara.</div>
+
+          <div class="dstats">
+            {
+              stats.map((s, i) => (
+                <div class={`dstat${i === 0 ? " is-active" : ""}`}>
+                  <div class="dstat__top">
+                    <span class="dstat__label">{s.label}</span>
+                    <span class="dstat__spark">
+                      <svg width="46" height="18" viewBox="0 0 46 18">
+                        {[6, 9, 7, 12, 8, 13, 10, 15].map((h, j) => (
+                          <rect
+                            x={j * 5.6}
+                            y={18 - h}
+                            width="3.4"
+                            height={h}
+                            rx="1"
+                            fill={j === 7 ? "#7c5cff" : "rgba(124,92,255,0.45)"}
+                          />
+                        ))}
+                      </svg>
+                    </span>
+                  </div>
+                  <div class="dstat__val">{s.value}</div>
+                  <div class={`dstat__delta${s.delta.startsWith("↓") ? " dn" : ""}`}>
+                    {s.delta}
+                  </div>
+                </div>
+              ))
+            }
+          </div>
+
+          <div class="dchart">
+            <div class="dchart__head">
+              <div class="dchart__metric">
+                <span class="dchart__num">29,745</span>
+                <span class="dchart__cap">Unique visitors · last 30 days</span>
+              </div>
+              <span class="dchart__tag on"><span class="swat"></span>Visitors</span>
+            </div>
+            <div class="dchart__plot">
+              <svg viewBox="0 0 680 200" preserveAspectRatio="none" class="og__area">
+                <defs>
+                  <linearGradient id="ar" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stop-color="#5b46e5" stop-opacity="0.38"></stop>
+                    <stop offset="1" stop-color="#5b46e5" stop-opacity="0"></stop>
+                  </linearGradient>
+                </defs>
+                <path
+                  d="M0,150 C50,142 80,96 130,104 S210,156 270,128 S360,62 430,86 S520,150 590,96 S652,74 680,88 L680,200 L0,200 Z"
+                  fill="url(#ar)"></path>
+                <path
+                  d="M0,150 C50,142 80,96 130,104 S210,156 270,128 S360,62 430,86 S520,150 590,96 S652,74 680,88"
+                  fill="none"
+                  stroke="#6b54ee"
+                  stroke-width="3"
+                  stroke-linecap="round"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <style>
+      :root[data-theme="dark"] body.og {
+        margin: 0;
+      }
+      body.og {
+        width: 1200px;
+        height: 630px;
+        margin: 0;
+        overflow: hidden;
+        position: relative;
+        background:
+          radial-gradient(900px 500px at 78% 18%, oklch(0.42 0.16 280 / 0.55), transparent 60%),
+          linear-gradient(135deg, #0b0a16 0%, #131022 55%, #0b0a16 100%);
+        font-family: var(--sans);
+      }
+      .og__glow {
+        position: absolute;
+        inset: -10% -10% auto auto;
+        width: 720px;
+        height: 720px;
+        background: radial-gradient(circle, oklch(0.55 0.2 290 / 0.4), transparent 62%);
+        filter: blur(10px);
+      }
+      .og__grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(oklch(1 0 0 / 0.04) 1px, transparent 1px),
+          linear-gradient(90deg, oklch(1 0 0 / 0.04) 1px, transparent 1px);
+        background-size: 46px 46px;
+        mask-image: radial-gradient(110% 90% at 20% 30%, #000 35%, transparent 75%);
+      }
+      .og__copy {
+        position: absolute;
+        left: 72px;
+        top: 96px;
+        width: 508px;
+        z-index: 3;
+      }
+      .og__brand {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+      }
+      .og__mark {
+        display: block;
+        width: 46px;
+        height: 46px;
+      }
+      .og__name {
+        font-size: 2rem;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        color: #fff;
+      }
+      .og__head {
+        margin: 40px 0 0;
+        font-family: var(--serif);
+        font-weight: 500;
+        font-size: 3.2rem;
+        line-height: 1.05;
+        letter-spacing: -0.02em;
+        color: #f4f2ff;
+      }
+      .og__head em {
+        font-style: italic;
+        color: #a99bff;
+      }
+      .og__sub {
+        margin: 22px 0 0;
+        font-size: 1.18rem;
+        line-height: 1.5;
+        color: oklch(0.84 0.02 285);
+        max-width: 30ch;
+      }
+      .og__tags {
+        display: flex;
+        gap: 10px;
+        margin-top: 28px;
+      }
+      .og__tags span {
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: oklch(0.86 0.02 285);
+        border: 1px solid oklch(1 0 0 / 0.14);
+        border-radius: 999px;
+        padding: 7px 13px;
+      }
+      .og__tags span:first-child {
+        color: #b3a6ff;
+      }
+      .og__stage {
+        position: absolute;
+        right: -120px;
+        top: 84px;
+        width: 760px;
+        height: 520px;
+        z-index: 2;
+        perspective: 1900px;
+      }
+      .og__dash {
+        width: 820px;
+        transform: rotateY(-22deg) rotateX(7deg) rotate(1deg);
+        transform-origin: left center;
+        box-shadow:
+          0 50px 120px -40px rgba(40, 22, 110, 0.8),
+          0 0 0 1px oklch(1 0 0 / 0.06);
+        border-radius: 18px;
+        -webkit-mask-image: linear-gradient(102deg, transparent 0, #000 16%);
+        mask-image: linear-gradient(102deg, transparent 0, #000 16%);
+      }
+      .og__area {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .dchart__plot {
+        height: 188px;
+      }
+    </style>
+  </body>
+</html>

@@ -690,6 +690,19 @@ section { position: relative; }
 .appranges__btn.is-active { background: var(--indigo); color: #fff; }
 
 .appstats { margin-top: 18px; }
+/* Blank sparkline placeholder shown until a site has a few days of data. */
+.dspark-ph { gap: 2px; }
+.dspark-ph i { flex: 1; height: 35%; border-radius: 1px; background: currentColor; color: var(--ink-mute); opacity: 0.22; }
+.dspark-ph i:nth-child(2) { height: 58%; }
+.dspark-ph i:nth-child(4) { height: 44%; }
+.dspark-ph i:nth-child(6) { height: 68%; }
+.dspark-ph i:nth-child(8) { height: 50%; }
+.dstat__delta--muted { color: oklch(0.74 0.015 285); }
+
+/* "Upgrade" pill in the app header (upper-right). */
+.appbadge { display: inline-flex; align-items: center; gap: 5px; font-size: 0.8rem; font-weight: 600; line-height: 1; color: #fff; padding: 7px 13px; border-radius: 999px; background: linear-gradient(100deg, var(--indigo), var(--iris)); box-shadow: 0 4px 14px -6px oklch(0.52 0.19 278 / 0.7); transition: filter .15s, transform .15s; }
+.appbadge:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.appbadge__i { font-weight: 700; }
 .appchart__empty { display: grid; place-items: center; height: 100%; color: var(--ink-mute); font-size: 0.85rem; }
 .appbreak { margin-top: 16px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 
