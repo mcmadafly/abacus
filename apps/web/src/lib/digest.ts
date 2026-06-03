@@ -42,6 +42,10 @@ export async function runDailyDigest(
       // 2. Read the (now-rolled) stats for the day.
       const stats = await getStats(env, site.id, day, day);
 
+      // Skip days with no traffic — don't send a "0 visitors" email. (The
+      // manual digest preview in the app still works regardless.)
+      if (stats.pageviews === 0 && stats.visitors === 0) continue;
+
       // 3. Email each enabled subscriber individually (so each gets their own
       //    one-click unsubscribe link + List-Unsubscribe header).
       const subs = (
