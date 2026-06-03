@@ -1,12 +1,14 @@
 ---
 // Gated POST: email the signed-in user a preview of tomorrow's daily digest for
 // one of their sites, using today's stats so far. Reuses the cron's renderer.
-import { createDb } from "@abacus/db";
+import { and, eq } from "drizzle-orm";
+import { createDb, digestSubscriptions } from "@abacus/db";
 import { getSite } from "../../lib/account";
 import { resolveUser } from "../../lib/auth";
 import { renderDigestEmail } from "../../lib/digest";
 import { getStats } from "../../lib/query";
 import { resendSendEmail } from "../../lib/resend";
+import { unsubToken, unsubscribeUrl } from "../../lib/unsub";
 
 export const prerender = false;
 
@@ -31,12 +33,34 @@ if (!env.RESEND_API_KEY || env.RESEND_API_KEY.includes("placeholder")) {
 const today = new Date().toISOString().slice(0, 10);
 try {
   const stats = await getStats(env, site.id, today, today);
-  const html = renderDigestEmail(site, today, stats);
+  const origin = Astro.url.origin;
+
+  // The owner's subscription (so the preview carries a working unsubscribe link).
+  const sub = await db.query.digestSubscriptions.findFirst({
+    where: and(
+      eq(digestSubscriptions.siteId, site.id),
+      eq(digestSubscriptions.email, me.email),
+    ),
+  });
+  const url = sub
+    ? unsubscribeUrl(origin, sub.id, await unsubToken(env.VISITOR_HASH_SALT, sub.id))
+    : undefined;
+
+  const html = renderDigestEmail(site, today, stats, {
+    unsubscribeUrl: url,
+    manageUrl: `${origin}/app/${site.id}`,
+  });
   await resendSendEmail(env.RESEND_API_KEY, {
     from: env.DIGEST_FROM_EMAIL,
     to: [me.email],
     subject: `Preview · ${site.domain}: ${stats.visitors.toLocaleString()} visitors today`,
     html,
+    headers: url
+      ? {
+          "List-Unsubscribe": `<${url}>`,
+          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+        }
+      : undefined,
   });
   return Astro.redirect(`${back}?digest=sent`);
 } catch (err) {

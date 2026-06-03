@@ -32,7 +32,14 @@ export async function resendAddContact(
 
 export async function resendSendEmail(
   apiKey: string,
-  msg: { from: string; to: string[]; subject: string; html: string },
+  msg: {
+    from: string;
+    to: string[];
+    subject: string;
+    html: string;
+    /** Extra MIME headers, e.g. List-Unsubscribe. */
+    headers?: Record<string, string>;
+  },
 ): Promise<void> {
   const res = await fetch(`${API}/emails`, {
     method: "POST",

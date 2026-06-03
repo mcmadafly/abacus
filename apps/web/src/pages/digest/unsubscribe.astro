@@ -1,0 +1,114 @@
+---
+// Public one-click unsubscribe for digest emails. GET shows a confirm page;
+// POST (the visible button or a List-Unsubscribe-Post client) disables the
+// subscription. Gated by a signed token over the subscription id.
+import Layout from "../../layouts/Layout.astro";
+import { eq } from "drizzle-orm";
+import { createDb, digestSubscriptions, sites } from "@abacus/db";
+import { verifyUnsubToken } from "../../lib/unsub";
+
+export const prerender = false;
+
+const env = Astro.locals.runtime.env;
+const db = createDb(env.DB);
+const id = Number(Astro.url.searchParams.get("id"));
+const token = Astro.url.searchParams.get("t") ?? "";
+
+let state: "invalid" | "confirm" | "done" = "invalid";
+let domain = "";
+
+if (Number.isFinite(id) && id > 0 && token) {
+  const sub = await db.query.digestSubscriptions.findFirst({
+    where: eq(digestSubscriptions.id, id),
+  });
+  const ok = sub && (await verifyUnsubToken(env.VISITOR_HASH_SALT, id, token));
+  if (sub && ok) {
+    const site = await db.query.sites.findFirst({
+      where: eq(sites.id, sub.siteId),
+    });
+    domain = site?.domain ?? "your site";
+    if (Astro.request.method === "POST") {
+      await db
+        .update(digestSubscriptions)
+        .set({ enabled: false })
+        .where(eq(digestSubscriptions.id, id));
+      state = "done";
+    } else {
+      state = "confirm";
+    }
+  }
+}
+const qs = `id=${id}&t=${encodeURIComponent(token)}`;
+---
+
+<Layout title="Unsubscribe — Abacus">
+  <main class="authwrap">
+    <div style="position:relative;z-index:2;width:100%;max-width:440px">
+      <div class="unsub">
+        {
+          state === "invalid" && (
+            <>
+              <h1 class="unsub__h">Link expired</h1>
+              <p class="unsub__p">
+                This unsubscribe link is invalid or has expired. You can manage
+                your digest from your dashboard instead.
+              </p>
+              <a href="/app" class="btn btn--dark">Go to dashboard</a>
+            </>
+          )
+        }
+        {
+          state === "confirm" && (
+            <>
+              <h1 class="unsub__h">Unsubscribe?</h1>
+              <p class="unsub__p">
+                Stop receiving the daily digest for <b>{domain}</b>? You can
+                re-enable it anytime from your dashboard.
+              </p>
+              <form method="POST" action={`/digest/unsubscribe?${qs}`}>
+                <button type="submit" class="btn btn--dark" style="width:100%;justify-content:center">
+                  Unsubscribe me
+                </button>
+              </form>
+            </>
+          )
+        }
+        {
+          state === "done" && (
+            <>
+              <h1 class="unsub__h">You're unsubscribed</h1>
+              <p class="unsub__p">
+                You'll no longer receive the daily digest for <b>{domain}</b>.
+                Changed your mind? Re-enable it from your dashboard.
+              </p>
+              <a href="/app" class="btn btn--dark">Go to dashboard</a>
+            </>
+          )
+        }
+      </div>
+    </div>
+  </main>
+</Layout>
+
+<style>
+  .unsub {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 34px 30px;
+    box-shadow: var(--shadow-card);
+    text-align: center;
+  }
+  .unsub__h {
+    font-family: var(--serif);
+    font-size: 1.7rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  .unsub__p {
+    color: var(--ink-soft);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin: 12px 0 22px;
+  }
+</style>
