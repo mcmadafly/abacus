@@ -43,12 +43,9 @@
   ],
 
   // Analytics Engine: high-volume raw pageview/event ingestion.
-  // ⚠️ Re-enable this once Analytics Engine is turned on for the account
-  // (Cloudflare dashboard → Workers → Analytics Engine). The ingest endpoint
-  // no-ops gracefully while it's unbound.
-  // "analytics_engine_datasets": [
-  //   { "binding": "AE", "dataset": "abacus_events" }
-  // ],
+  "analytics_engine_datasets": [
+    { "binding": "AE", "dataset": "abacus_events" }
+  ],
 
   // Nightly digest at 06:00 UTC.
   "triggers": {
