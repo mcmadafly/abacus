@@ -4,7 +4,8 @@
  * flow and the webhook.
  */
 export type PaidPlan = "growth" | "scale";
-export type PlanId = "free" | PaidPlan;
+// "unlimited" is an internal comp plan: unlimited sites, no quota, never metered.
+export type PlanId = "free" | "unlimited" | PaidPlan;
 export type Cycle = "monthly" | "yearly";
 
 // Flat base subscription prices (licensed).
@@ -39,7 +40,12 @@ export const INCLUDED_PAGEVIEWS: Record<PaidPlan, number> = {
 export const OVERAGE_PER_1K_USD = 0.5;
 
 export function isPaid(plan: string | null | undefined): boolean {
-  return plan === "growth" || plan === "scale";
+  return plan === "growth" || plan === "scale" || plan === "unlimited";
+}
+
+/** Internal comp account: bypasses all limits, no quota meter, never billed. */
+export function isUnlimited(plan: string | null | undefined): boolean {
+  return plan === "unlimited";
 }
 
 export function isPaidPlan(plan: string): plan is PaidPlan {
@@ -75,6 +81,7 @@ export const PLAN_LABEL: Record<PlanId, string> = {
   free: "Free",
   growth: "Growth",
   scale: "Scale",
+  unlimited: "Unlimited",
 };
 
 /** Included monthly pageviews for a plan, or null for free. */

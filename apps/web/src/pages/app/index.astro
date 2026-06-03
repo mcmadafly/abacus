@@ -28,7 +28,7 @@ const sites = await listSites(db, userId);
 if (sites.length === 1) return Astro.redirect(`/app/${sites[0]!.id}`);
 
 const account = await getAccount(db, userId);
-const plan = account?.plan as "free" | "growth" | "scale" | undefined;
+const plan = account?.plan as "free" | "growth" | "scale" | "unlimited" | undefined;
 const daysLeft = trialDaysLeft(account);
 const usage = await accountUsage(
   Astro.locals.runtime.env,

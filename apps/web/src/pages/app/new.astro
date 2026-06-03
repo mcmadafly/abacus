@@ -43,7 +43,7 @@ if (Astro.request.method === "POST") {
 
 const sites = await listSites(db, userId);
 const account = await getAccount(db, userId);
-const plan = account?.plan as "free" | "growth" | "scale" | undefined;
+const plan = account?.plan as "free" | "growth" | "scale" | "unlimited" | undefined;
 const atLimit = !isPaid(plan) && sites.length >= FREE_SITE_LIMIT;
 const daysLeft = trialDaysLeft(account);
 ---

@@ -35,7 +35,7 @@ if (!site) return Astro.redirect("/app");
 // Sidebar nav: the signed-in user's own sites (the demo is listed separately).
 const mySites = await listSites(db, userId);
 const account = await getAccount(db, userId);
-const plan = account?.plan as "free" | "growth" | "scale" | undefined;
+const plan = account?.plan as "free" | "growth" | "scale" | "unlimited" | undefined;
 const daysLeft = trialDaysLeft(account);
 const usage = await accountUsage(env, account, mySites.map((s) => s.id));
 const digestStatus = Astro.url.searchParams.get("digest");

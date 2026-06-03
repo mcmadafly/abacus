@@ -1,6 +1,6 @@
 ---
 import type { Site } from "@abacus/db";
-import { PLAN_LABEL, isPaid, type PlanId } from "../lib/plans";
+import { PLAN_LABEL, isPaid, isUnlimited, type PlanId } from "../lib/plans";
 
 interface Props {
   sites: Site[];
@@ -123,9 +123,13 @@ const over = usage ? usage.used > usage.included : false;
             </div>
           )}
           <p class="appside__trial">{PLAN_LABEL[plan]} plan · active</p>
-          <a href="/app/billing" class="appside__upgrade appside__upgrade--manage">
-            Manage billing
-          </a>
+          {
+            !isUnlimited(plan) && (
+              <a href="/app/billing" class="appside__upgrade appside__upgrade--manage">
+                Manage billing
+              </a>
+            )
+          }
         </>
       ) : (
         <>

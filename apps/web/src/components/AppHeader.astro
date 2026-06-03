@@ -4,7 +4,7 @@ import BrandMark from "./BrandMark.astro";
 import ThemeToggle from "./ThemeToggle.astro";
 import { clerkAppearance } from "../lib/clerkAppearance";
 import { AUTH_DISABLED } from "../lib/auth";
-import { PLAN_LABEL, isPaid, type PlanId } from "../lib/plans";
+import { PLAN_LABEL, isPaid, isUnlimited, type PlanId } from "../lib/plans";
 
 interface Props {
   crumb?: string;
@@ -33,7 +33,7 @@ const paid = isPaid(plan);
     <div class="flex items-center gap-3">
       {
         paid ? (
-          <a href="/app/billing" class="appbadge appbadge--pro">
+          <a href={isUnlimited(plan) ? "/app" : "/app/billing"} class="appbadge appbadge--pro">
             {PLAN_LABEL[plan]} <span class="appbadge__i">★</span>
           </a>
         ) : (
