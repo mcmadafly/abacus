@@ -21,7 +21,7 @@ if (!me) return Astro.redirect("/sign-in");
 const { userId, email } = me;
 
 const db = createDb(Astro.locals.runtime.env.DB);
-await ensureAccount(db, userId, email);
+await ensureAccount(db, userId, email, Astro.locals.runtime.env);
 
 let error: string | null = null;
 let upgrade = false;

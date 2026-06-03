@@ -24,6 +24,8 @@ interface Env {
   VISITOR_HASH_SALT: string;
   STRIPE_SECRET_KEY: string;
   STRIPE_WEBHOOK_SECRET: string;
+  /** Where new-signup notifications are sent (optional). */
+  ADMIN_EMAIL: string;
 }
 
 type Runtime = import("@astrojs/cloudflare").Runtime<Env>;

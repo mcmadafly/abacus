@@ -15,7 +15,7 @@ if (!me) return Astro.redirect("/sign-in");
 
 const env = Astro.locals.runtime.env;
 const db = createDb(env.DB);
-await ensureAccount(db, me.userId, me.email);
+await ensureAccount(db, me.userId, me.email, env);
 
 const plan = Astro.url.searchParams.get("plan") ?? "";
 const cycle: Cycle =
