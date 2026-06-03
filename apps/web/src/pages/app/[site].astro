@@ -33,7 +33,9 @@ if (!site) return Astro.redirect("/app");
 
 // Sidebar nav: the signed-in user's own sites (the demo is listed separately).
 const mySites = await listSites(db, userId);
-const daysLeft = trialDaysLeft(await getAccount(db, userId));
+const account = await getAccount(db, userId);
+const plan = account?.plan as "free" | "growth" | "scale" | undefined;
+const daysLeft = trialDaysLeft(account);
 
 // Range: ?range=7|30|90 (days), default 7.
 const range = Number(Astro.url.searchParams.get("range")) || 7;
@@ -129,13 +131,14 @@ const chartData = JSON.stringify({
 ---
 
 <Layout title={`${site.domain} — Abacus`}>
-  <AppHeader crumb={site.domain} />
+  <AppHeader crumb={site.domain} plan={plan} />
 
   <div class="appshell">
     <AppSidebar
       sites={mySites}
       activeId={isDemo ? "demo" : site.id}
       daysLeft={daysLeft}
+      plan={plan}
     />
 
     <!-- main -->

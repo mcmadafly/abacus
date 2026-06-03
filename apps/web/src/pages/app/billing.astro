@@ -1,0 +1,30 @@
+---
+// Gated: opens the Stripe customer portal so paid users can manage or cancel.
+import { createDb } from "@abacus/db";
+import { getAccount } from "../../lib/account";
+import { resolveUser } from "../../lib/auth";
+import { createBillingPortalSession } from "../../lib/stripe";
+
+export const prerender = false;
+
+const me = await resolveUser(Astro.locals);
+if (!me) return Astro.redirect("/sign-in");
+
+const env = Astro.locals.runtime.env;
+const db = createDb(env.DB);
+const account = await getAccount(db, me.userId);
+
+if (!account?.stripeCustomerId) return Astro.redirect("/upgrade");
+
+try {
+  const portal = await createBillingPortalSession(
+    env.STRIPE_SECRET_KEY,
+    account.stripeCustomerId,
+    `${Astro.url.origin}/app`,
+  );
+  return Astro.redirect(portal.url, 303);
+} catch {
+  // Portal not configured yet, etc. — fall back to the dashboard.
+  return Astro.redirect("/app?billing=unavailable");
+}
+---

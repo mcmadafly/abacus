@@ -1,0 +1,40 @@
+---
+// Gated entry point for Stripe Checkout. The /upgrade CTAs link here with
+// ?plan=growth|scale&cycle=monthly|yearly; we create a subscription Checkout
+// Session and 303-redirect to Stripe's hosted page.
+import { createDb } from "@abacus/db";
+import { ensureAccount, getAccount } from "../../lib/account";
+import { resolveUser } from "../../lib/auth";
+import { isPaid, isPaidPlan, priceId, type Cycle } from "../../lib/plans";
+import { createCheckoutSession } from "../../lib/stripe";
+
+export const prerender = false;
+
+const me = await resolveUser(Astro.locals);
+if (!me) return Astro.redirect("/sign-in");
+
+const env = Astro.locals.runtime.env;
+const db = createDb(env.DB);
+await ensureAccount(db, me.userId, me.email);
+
+const plan = Astro.url.searchParams.get("plan") ?? "";
+const cycle: Cycle =
+  Astro.url.searchParams.get("cycle") === "yearly" ? "yearly" : "monthly";
+if (!isPaidPlan(plan)) return Astro.redirect("/upgrade");
+
+const account = await getAccount(db, me.userId);
+// Already subscribed — send them to manage instead of double-subscribing.
+if (isPaid(account?.plan)) return Astro.redirect("/app/billing");
+
+const origin = Astro.url.origin;
+const session = await createCheckoutSession(env.STRIPE_SECRET_KEY, {
+  priceId: priceId(plan, cycle),
+  successUrl: `${origin}/app/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+  cancelUrl: `${origin}/upgrade?canceled=1`,
+  clientReferenceId: me.userId,
+  customerEmail: me.email,
+  customerId: account?.stripeCustomerId ?? undefined,
+});
+
+return Astro.redirect(session.url, 303);
+---

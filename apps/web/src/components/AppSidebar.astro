@@ -1,5 +1,6 @@
 ---
 import type { Site } from "@abacus/db";
+import { PLAN_LABEL, isPaid, type PlanId } from "../lib/plans";
 
 interface Props {
   sites: Site[];
@@ -7,9 +8,11 @@ interface Props {
   activeId?: string;
   /** Whole days left in the feature trial (0 = lapsed). */
   daysLeft: number;
+  plan?: PlanId;
 }
-const { sites, activeId, daysLeft } = Astro.props;
+const { sites, activeId, daysLeft, plan = "free" } = Astro.props;
 const multi = sites.length > 1;
+const paid = isPaid(plan);
 ---
 
 <aside class="dside appside">
@@ -65,16 +68,29 @@ const multi = sites.length > 1;
 
   <div class="appside__foot">
     {
-      daysLeft > 0 ? (
-        <p class="appside__trial">
-          {daysLeft} day{daysLeft === 1 ? "" : "s"} left in your trial
-        </p>
+      paid ? (
+        <>
+          <p class="appside__trial">{PLAN_LABEL[plan]} plan · active</p>
+          <a href="/app/billing" class="appside__upgrade appside__upgrade--manage">
+            Manage billing
+          </a>
+        </>
       ) : (
-        <p class="appside__trial appside__trial--ended">Trial ended · Free plan</p>
+        <>
+          {daysLeft > 0 ? (
+            <p class="appside__trial">
+              {daysLeft} day{daysLeft === 1 ? "" : "s"} left in your trial
+            </p>
+          ) : (
+            <p class="appside__trial appside__trial--ended">
+              Trial ended · Free plan
+            </p>
+          )}
+          <a href="/upgrade" class="appside__upgrade">
+            Upgrade <span class="arrow">↑</span>
+          </a>
+        </>
       )
     }
-    <a href="/upgrade" class="appside__upgrade">
-      Upgrade <span class="arrow">↑</span>
-    </a>
   </div>
 </aside>

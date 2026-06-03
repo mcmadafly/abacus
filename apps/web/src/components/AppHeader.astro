@@ -4,11 +4,14 @@ import BrandMark from "./BrandMark.astro";
 import ThemeToggle from "./ThemeToggle.astro";
 import { clerkAppearance } from "../lib/clerkAppearance";
 import { AUTH_DISABLED } from "../lib/auth";
+import { PLAN_LABEL, isPaid, type PlanId } from "../lib/plans";
 
 interface Props {
   crumb?: string;
+  plan?: PlanId;
 }
-const { crumb } = Astro.props;
+const { crumb, plan = "free" } = Astro.props;
+const paid = isPaid(plan);
 ---
 
 <header class="border-b border-[var(--line-soft)] bg-[var(--paper)]">
@@ -28,9 +31,17 @@ const { crumb } = Astro.props;
       }
     </div>
     <div class="flex items-center gap-3">
-      <a href="/upgrade" class="appbadge">
-        Upgrade <span class="appbadge__i">↑</span>
-      </a>
+      {
+        paid ? (
+          <a href="/app/billing" class="appbadge appbadge--pro">
+            {PLAN_LABEL[plan]} <span class="appbadge__i">★</span>
+          </a>
+        ) : (
+          <a href="/upgrade" class="appbadge">
+            Upgrade <span class="appbadge__i">↑</span>
+          </a>
+        )
+      }
       <ThemeToggle />
       {
         AUTH_DISABLED ? (

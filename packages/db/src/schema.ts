@@ -17,6 +17,14 @@ export const accounts = sqliteTable("accounts", {
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .default(sql`(unixepoch())`),
+  // Billing (Stripe). plan: "free" | "growth" | "scale".
+  plan: text("plan").notNull().default("free"),
+  // Stripe subscription status, e.g. "active" | "trialing" | "past_due" |
+  // "canceled". Null until they first subscribe.
+  subscriptionStatus: text("subscription_status"),
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  currentPeriodEnd: integer("current_period_end", { mode: "timestamp" }),
 });
 
 /**

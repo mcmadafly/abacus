@@ -92,13 +92,14 @@ const priced = plans.map((p) => {
               >
                 Billed monthly
               </p>
-              <button
-                type="button"
+              <a
+                href={`/app/checkout?plan=${p.name.toLowerCase()}&cycle=monthly`}
+                data-plan={p.name.toLowerCase()}
                 class={`btn ${p.highlight ? "btn--dark" : "btn--ghost"} up__cta`}
                 style="width:100%;justify-content:center"
               >
                 Choose {p.name} <span class="arrow">→</span>
-              </button>
+              </a>
               <ul class="up__list">
                 {p.features.map((f) => (
                   <li>
@@ -129,6 +130,10 @@ const priced = plans.map((p) => {
       document.querySelectorAll<HTMLElement>(".up__billed").forEach((el) => {
         el.textContent = el.dataset[`billed${cap(cycle)}`] ?? "";
       });
+      // Carry the selected cycle into the checkout links.
+      document.querySelectorAll<HTMLAnchorElement>(".up__cta").forEach((a) => {
+        a.href = `/app/checkout?plan=${a.dataset.plan}&cycle=${cycle}`;
+      });
       wrap
         ?.querySelectorAll<HTMLElement>("button")
         .forEach((b) => b.classList.toggle("is-active", b.dataset.cycle === cycle));
@@ -137,12 +142,6 @@ const priced = plans.map((p) => {
       b.addEventListener("click", () => {
         cycle = (b.dataset.cycle as "monthly" | "yearly") ?? "monthly";
         apply();
-      }),
-    );
-    document.querySelectorAll<HTMLButtonElement>(".up__cta").forEach((b) =>
-      b.addEventListener("click", () => {
-        b.textContent = "Selected — checkout coming soon ✓";
-        b.disabled = true;
       }),
     );
   </script>

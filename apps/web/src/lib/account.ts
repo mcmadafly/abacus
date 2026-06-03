@@ -4,6 +4,7 @@
  */
 import { and, eq } from "drizzle-orm";
 import { createDb, accounts, sites, type Account, type Site } from "@abacus/db";
+import { isPaid } from "./plans";
 
 /** The shared, read-only "live demo" site shown to new users (see db/demo.sql). */
 export const DEMO_SITE_ID = "demo";
@@ -93,14 +94,17 @@ export async function createSite(
   if (!isValidDomain(normalized)) {
     return { ok: false, error: "Please enter a valid domain, e.g. example.com" };
   }
-  // Free plan is capped at one site — adding more requires an upgrade.
-  const owned = await listSites(db, userId);
-  if (owned.length >= FREE_SITE_LIMIT) {
-    return {
-      ok: false,
-      upgrade: true,
-      error: "The free plan includes one site. Upgrade to add more.",
-    };
+  // Free plan is capped at one site; paid plans (Growth/Scale) are unlimited.
+  const account = await getAccount(db, userId);
+  if (!isPaid(account?.plan)) {
+    const owned = await listSites(db, userId);
+    if (owned.length >= FREE_SITE_LIMIT) {
+      return {
+        ok: false,
+        upgrade: true,
+        error: "The free plan includes one site. Upgrade to add more.",
+      };
+    }
   }
   const existing = await db.query.sites.findFirst({
     where: eq(sites.domain, normalized),

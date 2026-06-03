@@ -703,6 +703,12 @@ section { position: relative; }
 .appbadge { display: inline-flex; align-items: center; gap: 5px; font-size: 0.8rem; font-weight: 600; line-height: 1; color: #fff; padding: 7px 13px; border-radius: 999px; background: linear-gradient(100deg, var(--indigo), var(--iris)); box-shadow: 0 4px 14px -6px oklch(0.52 0.19 278 / 0.7); transition: filter .15s, transform .15s; }
 .appbadge:hover { filter: brightness(1.08); transform: translateY(-1px); }
 .appbadge__i { font-weight: 700; }
+/* Paid accounts: a calmer "plan" pill instead of the loud upgrade gradient. */
+.appbadge--pro { background: none; color: var(--indigo-d); border: 1px solid var(--indigo); box-shadow: none; }
+.appbadge--pro:hover { background: var(--iris-wash); filter: none; }
+.appbadge--pro .appbadge__i { color: var(--indigo); }
+.appside__upgrade--manage { background: transparent; border: 1px solid var(--line); color: var(--ink-soft); }
+.appside__upgrade--manage:hover { background: var(--bg-2); color: var(--ink); }
 .appchart__empty { display: grid; place-items: center; height: 100%; color: var(--ink-mute); font-size: 0.85rem; }
 .appbreak { margin-top: 16px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 

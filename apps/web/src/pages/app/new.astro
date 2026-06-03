@@ -12,6 +12,7 @@ import {
   trialDaysLeft,
 } from "../../lib/account";
 import { resolveUser } from "../../lib/auth";
+import { isPaid } from "../../lib/plans";
 
 export const prerender = false;
 
@@ -41,14 +42,16 @@ if (Astro.request.method === "POST") {
 }
 
 const sites = await listSites(db, userId);
-const atLimit = sites.length >= FREE_SITE_LIMIT;
-const daysLeft = trialDaysLeft(await getAccount(db, userId));
+const account = await getAccount(db, userId);
+const plan = account?.plan as "free" | "growth" | "scale" | undefined;
+const atLimit = !isPaid(plan) && sites.length >= FREE_SITE_LIMIT;
+const daysLeft = trialDaysLeft(account);
 ---
 
 <Layout title="Add a site — Abacus">
-  <AppHeader crumb="Add site" />
+  <AppHeader crumb="Add site" plan={plan} />
   <div class="appshell">
-    <AppSidebar sites={sites} daysLeft={daysLeft} />
+    <AppSidebar sites={sites} daysLeft={daysLeft} plan={plan} />
     <main class="dmain appmain">
       <div class="dtop">
         <div class="dhello">Add a site</div>

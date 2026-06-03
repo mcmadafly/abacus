@@ -26,7 +26,9 @@ const sites = await listSites(db, userId);
 // One site → straight to its dashboard. None → the welcome screen below.
 if (sites.length === 1) return Astro.redirect(`/app/${sites[0]!.id}`);
 
-const daysLeft = trialDaysLeft(await getAccount(db, userId));
+const account = await getAccount(db, userId);
+const plan = account?.plan as "free" | "growth" | "scale" | undefined;
+const daysLeft = trialDaysLeft(account);
 
 // Range for the cross-site summary.
 const range = Number(Astro.url.searchParams.get("range")) || 30;
@@ -69,7 +71,7 @@ const aggDelta = pctDelta(totalPrevPv, totalPageviews);
 ---
 
 <Layout title="Overview — Abacus">
-  <AppHeader crumb={sites.length > 1 ? "Overview" : undefined} />
+  <AppHeader crumb={sites.length > 1 ? "Overview" : undefined} plan={plan} />
 
   {
     sites.length === 0 ? (
@@ -106,7 +108,7 @@ const aggDelta = pctDelta(totalPrevPv, totalPageviews);
       </main>
     ) : (
       <div class="appshell">
-        <AppSidebar sites={sites} activeId="overview" daysLeft={daysLeft} />
+        <AppSidebar sites={sites} activeId="overview" daysLeft={daysLeft} plan={plan} />
         <main class="dmain appmain">
           <div class="dtop">
             <div class="dhello">Overview</div>

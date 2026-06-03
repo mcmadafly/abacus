@@ -22,6 +22,8 @@ interface Env {
   DIGEST_FROM_EMAIL: string;
   CF_AE_API_TOKEN: string;
   VISITOR_HASH_SALT: string;
+  STRIPE_SECRET_KEY: string;
+  STRIPE_WEBHOOK_SECRET: string;
 }
 
 type Runtime = import("@astrojs/cloudflare").Runtime<Env>;

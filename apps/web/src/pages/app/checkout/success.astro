@@ -1,0 +1,52 @@
+---
+// Stripe success_url. Optimistically reconciles the account from the completed
+// session so the upgrade is reflected immediately; the webhook is the
+// authoritative sync (handles renewals/cancellations).
+import { eq } from "drizzle-orm";
+import { createDb, accounts } from "@abacus/db";
+import { resolveUser } from "../../../lib/auth";
+import { planForPrice } from "../../../lib/plans";
+import { retrieveSession, retrieveSubscription } from "../../../lib/stripe";
+
+export const prerender = false;
+
+const me = await resolveUser(Astro.locals);
+if (!me) return Astro.redirect("/sign-in");
+
+const env = Astro.locals.runtime.env;
+const sessionId = Astro.url.searchParams.get("session_id");
+
+if (sessionId) {
+  try {
+    const session = await retrieveSession(env.STRIPE_SECRET_KEY, sessionId);
+    if (
+      session.payment_status === "paid" &&
+      session.client_reference_id === me.userId &&
+      session.subscription
+    ) {
+      const sub = await retrieveSubscription(
+        env.STRIPE_SECRET_KEY,
+        session.subscription,
+      );
+      const plan = planForPrice(sub?.items?.data?.[0]?.price?.id);
+      const db = createDb(env.DB);
+      await db
+        .update(accounts)
+        .set({
+          plan: plan ?? "growth",
+          subscriptionStatus: sub?.status ?? "active",
+          stripeCustomerId: session.customer,
+          stripeSubscriptionId: session.subscription,
+          currentPeriodEnd: sub?.current_period_end
+            ? new Date(sub.current_period_end * 1000)
+            : null,
+        })
+        .where(eq(accounts.id, me.userId));
+    }
+  } catch {
+    // Non-fatal: the webhook will reconcile.
+  }
+}
+
+return Astro.redirect("/app?upgraded=1");
+---
