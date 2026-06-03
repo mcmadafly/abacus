@@ -38,6 +38,7 @@ const account = await getAccount(db, userId);
 const plan = account?.plan as "free" | "growth" | "scale" | undefined;
 const daysLeft = trialDaysLeft(account);
 const usage = await accountUsage(env, account, mySites.map((s) => s.id));
+const digestStatus = Astro.url.searchParams.get("digest");
 
 // Range: ?range=7|30|90 (days), default 7.
 const range = Number(Astro.url.searchParams.get("range")) || 7;
@@ -142,10 +143,33 @@ const chartData = JSON.stringify({
       daysLeft={daysLeft}
       plan={plan}
       usage={usage}
+      previewSiteId={isDemo ? mySites[0]?.id : site.id}
     />
 
     <!-- main -->
     <main class="dmain appmain">
+      {
+        digestStatus === "sent" && (
+          <div class="appnote appnote--ok">
+            ✓ Digest preview sent to {me.email}.
+          </div>
+        )
+      }
+      {
+        digestStatus === "error" && (
+          <div class="appnote appnote--err">
+            Couldn't send the digest preview — please try again shortly.
+          </div>
+        )
+      }
+      {
+        digestStatus === "unconfigured" && (
+          <div class="appnote appnote--err">
+            Email delivery isn't configured yet (Resend). Add a real RESEND_API_KEY
+            to enable digest previews.
+          </div>
+        )
+      }
       {
         isDemo && (
           <div class="appdemo">

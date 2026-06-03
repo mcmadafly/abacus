@@ -676,6 +676,8 @@ section { position: relative; }
 .appside .dside__label:first-child { padding-top: 0; }
 .appside__dom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .appside__empty { color: var(--ink-mute); font-size: 0.82rem; padding: 4px 10px 8px; }
+.appside__digestform { margin: 0; }
+.dnav--btn { width: 100%; appearance: none; background: transparent; border: 0; font: inherit; cursor: pointer; text-align: left; }
 .appside__foot { margin-top: auto; padding-top: 18px; }
 .appside__usage { padding: 0 10px 12px; }
 .appside__usagetop { display: flex; align-items: baseline; justify-content: space-between; font-size: 0.82rem; font-weight: 600; color: var(--ink); }
@@ -690,6 +692,9 @@ section { position: relative; }
 .appside__upgrade:hover { background: var(--indigo); color: #fff; }
 .appside__upgrade .arrow { font-weight: 700; }
 .appmain.dmain { padding: 28px 32px 56px; }
+.appnote { margin-bottom: 18px; padding: 11px 15px; border-radius: 10px; font-size: 0.86rem; border: 1px solid var(--line); }
+.appnote--ok { background: var(--iris-wash); border-color: var(--indigo); color: var(--indigo-d); }
+.appnote--err { background: oklch(0.62 0.13 30 / 0.12); border-color: oklch(0.62 0.13 30 / 0.4); color: var(--bad, #c0563b); }
 
 .appranges { display: inline-flex; gap: 2px; border: 1px solid var(--line); border-radius: 9px; padding: 3px; }
 .appranges__btn { padding: 4px 13px; border-radius: 6px; font-size: 0.8rem; font-weight: 500; color: var(--ink-soft); transition: background .15s, color .15s; }

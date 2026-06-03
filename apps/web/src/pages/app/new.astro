@@ -51,7 +51,7 @@ const daysLeft = trialDaysLeft(account);
 <Layout title="Add a site — Abacus">
   <AppHeader crumb="Add site" plan={plan} />
   <div class="appshell">
-    <AppSidebar sites={sites} daysLeft={daysLeft} plan={plan} />
+    <AppSidebar sites={sites} daysLeft={daysLeft} plan={plan} previewSiteId={sites[0]?.id} />
     <main class="dmain appmain">
       <div class="dtop">
         <div class="dhello">Add a site</div>

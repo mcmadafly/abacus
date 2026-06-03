@@ -11,8 +11,17 @@ interface Props {
   plan?: PlanId;
   /** Pageviews used this month vs included quota (paid accounts only). */
   usage?: { used: number; included: number } | null;
+  /** Site to preview the daily digest for (the active or first owned site). */
+  previewSiteId?: string;
 }
-const { sites, activeId, daysLeft, plan = "free", usage } = Astro.props;
+const {
+  sites,
+  activeId,
+  daysLeft,
+  plan = "free",
+  usage,
+  previewSiteId,
+} = Astro.props;
 const multi = sites.length > 1;
 const paid = isPaid(plan);
 const compact = (n: number) =>
@@ -73,6 +82,20 @@ const over = usage ? usage.used > usage.included : false;
     </svg>
     <span class="appside__dom">Add site</span>
   </a>
+  {
+    previewSiteId && (
+      <form method="POST" action="/app/preview-digest" class="appside__digestform">
+        <input type="hidden" name="site" value={previewSiteId} />
+        <button type="submit" class="dnav dnav--btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="3" y="5" width="18" height="14" rx="2" />
+            <path d="m3 7 9 6 9-6" />
+          </svg>
+          <span class="appside__dom">Email me a digest preview</span>
+        </button>
+      </form>
+    )
+  }
 
   <div class="appside__foot">
     {

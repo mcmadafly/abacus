@@ -1,0 +1,46 @@
+---
+// Gated POST: email the signed-in user a preview of tomorrow's daily digest for
+// one of their sites, using today's stats so far. Reuses the cron's renderer.
+import { createDb } from "@abacus/db";
+import { getSite } from "../../lib/account";
+import { resolveUser } from "../../lib/auth";
+import { renderDigestEmail } from "../../lib/digest";
+import { getStats } from "../../lib/query";
+import { resendSendEmail } from "../../lib/resend";
+
+export const prerender = false;
+
+const me = await resolveUser(Astro.locals);
+if (!me) return Astro.redirect("/sign-in");
+if (Astro.request.method !== "POST") return Astro.redirect("/app");
+
+const env = Astro.locals.runtime.env;
+const db = createDb(env.DB);
+
+const formData = await Astro.request.formData();
+const siteId = String(formData.get("site") ?? "");
+const site = await getSite(db, me.userId, siteId);
+if (!site) return Astro.redirect("/app");
+
+const back = `/app/${site.id}`;
+
+if (!env.RESEND_API_KEY || env.RESEND_API_KEY.includes("placeholder")) {
+  return Astro.redirect(`${back}?digest=unconfigured`);
+}
+
+const today = new Date().toISOString().slice(0, 10);
+try {
+  const stats = await getStats(env, site.id, today, today);
+  const html = renderDigestEmail(site, today, stats);
+  await resendSendEmail(env.RESEND_API_KEY, {
+    from: env.DIGEST_FROM_EMAIL,
+    to: [me.email],
+    subject: `Preview · ${site.domain}: ${stats.visitors.toLocaleString()} visitors today`,
+    html,
+  });
+  return Astro.redirect(`${back}?digest=sent`);
+} catch (err) {
+  console.error("digest preview failed:", err);
+  return Astro.redirect(`${back}?digest=error`);
+}
+---

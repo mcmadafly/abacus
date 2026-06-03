@@ -114,7 +114,7 @@ const aggDelta = pctDelta(totalPrevPv, totalPageviews);
       </main>
     ) : (
       <div class="appshell">
-        <AppSidebar sites={sites} activeId="overview" daysLeft={daysLeft} plan={plan} usage={usage} />
+        <AppSidebar sites={sites} activeId="overview" daysLeft={daysLeft} plan={plan} usage={usage} previewSiteId={sites[0]?.id} />
         <main class="dmain appmain">
           <div class="dtop">
             <div class="dhello">Overview</div>
