@@ -38,7 +38,8 @@ async function call<T = any>(
 }
 
 export interface CheckoutOpts {
-  priceId: string;
+  /** Line items; metered items (usage-based) must omit quantity. */
+  lineItems: { price: string; metered?: boolean }[];
   successUrl: string;
   cancelUrl: string;
   clientReferenceId: string;
@@ -50,10 +51,8 @@ export async function createCheckoutSession(
   secretKey: string,
   opts: CheckoutOpts,
 ): Promise<{ id: string; url: string }> {
-  const body = form({
+  const fields: Record<string, string | number | boolean | undefined> = {
     mode: "subscription",
-    "line_items[0][price]": opts.priceId,
-    "line_items[0][quantity]": 1,
     success_url: opts.successUrl,
     cancel_url: opts.cancelUrl,
     client_reference_id: opts.clientReferenceId,
@@ -63,8 +62,36 @@ export async function createCheckoutSession(
     ...(opts.customerId
       ? { customer: opts.customerId }
       : { customer_email: opts.customerEmail }),
+  };
+  opts.lineItems.forEach((item, i) => {
+    fields[`line_items[${i}][price]`] = item.price;
+    if (!item.metered) fields[`line_items[${i}][quantity]`] = 1;
   });
-  return call(secretKey, "/checkout/sessions", body);
+  return call(secretKey, "/checkout/sessions", form(fields));
+}
+
+/** Report metered usage to a Stripe Billing Meter (sum aggregation). */
+export async function reportMeterEvent(
+  secretKey: string,
+  opts: {
+    eventName: string;
+    customerId: string;
+    value: number;
+    timestamp?: number;
+    identifier?: string;
+  },
+): Promise<void> {
+  await call(
+    secretKey,
+    "/billing/meter_events",
+    form({
+      event_name: opts.eventName,
+      "payload[stripe_customer_id]": opts.customerId,
+      "payload[value]": Math.round(opts.value),
+      ...(opts.timestamp ? { timestamp: opts.timestamp } : {}),
+      ...(opts.identifier ? { identifier: opts.identifier } : {}),
+    }),
+  );
 }
 
 export function retrieveSession(secretKey: string, id: string) {

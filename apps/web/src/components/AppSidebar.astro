@@ -9,10 +9,18 @@ interface Props {
   /** Whole days left in the feature trial (0 = lapsed). */
   daysLeft: number;
   plan?: PlanId;
+  /** Pageviews used this month vs included quota (paid accounts only). */
+  usage?: { used: number; included: number } | null;
 }
-const { sites, activeId, daysLeft, plan = "free" } = Astro.props;
+const { sites, activeId, daysLeft, plan = "free", usage } = Astro.props;
 const multi = sites.length > 1;
 const paid = isPaid(plan);
+const compact = (n: number) =>
+  n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}k` : String(n);
+const usagePct = usage
+  ? Math.min(100, Math.round((usage.used / usage.included) * 100))
+  : 0;
+const over = usage ? usage.used > usage.included : false;
 ---
 
 <aside class="dside appside">
@@ -70,6 +78,23 @@ const paid = isPaid(plan);
     {
       paid ? (
         <>
+          {usage && (
+            <div class="appside__usage">
+              <div class="appside__usagetop">
+                <span>{compact(usage.used)} / {compact(usage.included)}</span>
+                <span class="appside__usagecap">views · mo</span>
+              </div>
+              <div class="appside__bar">
+                <i
+                  class={over ? "is-over" : ""}
+                  style={`width:${Math.max(2, usagePct)}%`}
+                />
+              </div>
+              {over && (
+                <p class="appside__over">Over quota — overage billed at $0.50/1k</p>
+              )}
+            </div>
+          )}
           <p class="appside__trial">{PLAN_LABEL[plan]} plan · active</p>
           <a href="/app/billing" class="appside__upgrade appside__upgrade--manage">
             Manage billing

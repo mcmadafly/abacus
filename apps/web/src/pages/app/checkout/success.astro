@@ -5,7 +5,7 @@
 import { eq } from "drizzle-orm";
 import { createDb, accounts } from "@abacus/db";
 import { resolveUser } from "../../../lib/auth";
-import { planForPrice } from "../../../lib/plans";
+import { planForPrices } from "../../../lib/plans";
 import { retrieveSession, retrieveSubscription } from "../../../lib/stripe";
 
 export const prerender = false;
@@ -28,7 +28,9 @@ if (sessionId) {
         env.STRIPE_SECRET_KEY,
         session.subscription,
       );
-      const plan = planForPrice(sub?.items?.data?.[0]?.price?.id);
+      const plan = planForPrices(
+        (sub?.items?.data ?? []).map((i: any) => i?.price?.id),
+      );
       const db = createDb(env.DB);
       await db
         .update(accounts)

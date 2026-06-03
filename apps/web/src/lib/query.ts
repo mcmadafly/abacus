@@ -5,8 +5,30 @@
  * AE has no local query support, callers fall back to the D1 `daily_stats`
  * rollup (see `getStatsFromD1`) when AE isn't configured — e.g. local dev.
  */
-import { and, eq, gte, lte } from "drizzle-orm";
+import { and, eq, gte, inArray, lte } from "drizzle-orm";
 import { createDb, dailyStats, type TopItem } from "@abacus/db";
+
+/** Sum pageviews across sites over [startDay, endDay] from the D1 rollup. */
+export async function sumPageviews(
+  env: Env,
+  siteIds: string[],
+  startDay: string,
+  endDay: string,
+): Promise<number> {
+  if (siteIds.length === 0) return 0;
+  const db = createDb(env.DB);
+  const rows = await db
+    .select({ pv: dailyStats.pageviews })
+    .from(dailyStats)
+    .where(
+      and(
+        inArray(dailyStats.siteId, siteIds),
+        gte(dailyStats.date, startDay),
+        lte(dailyStats.date, endDay),
+      ),
+    );
+  return rows.reduce((s, r) => s + r.pv, 0);
+}
 
 const AE_TABLE = "abacus_events";
 

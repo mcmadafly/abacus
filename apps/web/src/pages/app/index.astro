@@ -11,6 +11,7 @@ import {
 } from "../../lib/account";
 import { resolveUser } from "../../lib/auth";
 import { getStatsWithDelta, pctDelta } from "../../lib/query";
+import { accountUsage } from "../../lib/usage";
 
 export const prerender = false;
 
@@ -29,6 +30,11 @@ if (sites.length === 1) return Astro.redirect(`/app/${sites[0]!.id}`);
 const account = await getAccount(db, userId);
 const plan = account?.plan as "free" | "growth" | "scale" | undefined;
 const daysLeft = trialDaysLeft(account);
+const usage = await accountUsage(
+  Astro.locals.runtime.env,
+  account,
+  sites.map((s) => s.id),
+);
 
 // Range for the cross-site summary.
 const range = Number(Astro.url.searchParams.get("range")) || 30;
@@ -108,7 +114,7 @@ const aggDelta = pctDelta(totalPrevPv, totalPageviews);
       </main>
     ) : (
       <div class="appshell">
-        <AppSidebar sites={sites} activeId="overview" daysLeft={daysLeft} plan={plan} />
+        <AppSidebar sites={sites} activeId="overview" daysLeft={daysLeft} plan={plan} usage={usage} />
         <main class="dmain appmain">
           <div class="dtop">
             <div class="dhello">Overview</div>

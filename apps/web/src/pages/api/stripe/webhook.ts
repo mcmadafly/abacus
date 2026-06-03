@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { eq } from "drizzle-orm";
 import { createDb, accounts } from "@abacus/db";
-import { planForPrice } from "../../../lib/plans";
+import { planForPrices } from "../../../lib/plans";
 import {
   retrieveSubscription,
   verifyStripeSignature,
@@ -26,7 +26,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const db = createDb(env.DB);
 
   const syncSub = async (sub: any, userId?: string) => {
-    const plan = planForPrice(sub?.items?.data?.[0]?.price?.id);
+    const plan = planForPrices(
+      (sub?.items?.data ?? []).map((i: any) => i?.price?.id),
+    );
     const active = ACTIVE.has(sub.status);
     const where = userId
       ? eq(accounts.id, userId)

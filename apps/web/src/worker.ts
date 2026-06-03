@@ -14,6 +14,7 @@ import type {
 } from "@cloudflare/workers-types";
 import { handle } from "@astrojs/cloudflare/handler";
 import { runDailyDigest } from "./lib/digest";
+import { reportUsage } from "./lib/usage";
 
 // Use exactly the parameter types `handle` expects (incoming Cf request and the
 // adapter's internal Env shape), sidestepping DOM-vs-workers structural clashes.
@@ -29,7 +30,13 @@ export function createExports(manifest: SSRManifest) {
         return handle(manifest, app, request, env, ctx);
       },
       scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext) {
-        ctx.waitUntil(runDailyDigest(env, controller.scheduledTime));
+        // Roll up + email the digest, then report metered usage to Stripe
+        // (the rollup must finish first so daily_stats is populated).
+        ctx.waitUntil(
+          runDailyDigest(env, controller.scheduledTime).then(() =>
+            reportUsage(env, controller.scheduledTime),
+          ),
+        );
       },
     },
   };

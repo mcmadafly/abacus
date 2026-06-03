@@ -5,7 +5,7 @@
 import { createDb } from "@abacus/db";
 import { ensureAccount, getAccount } from "../../lib/account";
 import { resolveUser } from "../../lib/auth";
-import { isPaid, isPaidPlan, priceId, type Cycle } from "../../lib/plans";
+import { checkoutLineItems, isPaid, isPaidPlan, type Cycle } from "../../lib/plans";
 import { createCheckoutSession } from "../../lib/stripe";
 
 export const prerender = false;
@@ -28,7 +28,7 @@ if (isPaid(account?.plan)) return Astro.redirect("/app/billing");
 
 const origin = Astro.url.origin;
 const session = await createCheckoutSession(env.STRIPE_SECRET_KEY, {
-  priceId: priceId(plan, cycle),
+  lineItems: checkoutLineItems(plan, cycle),
   successUrl: `${origin}/app/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
   cancelUrl: `${origin}/upgrade?canceled=1`,
   clientReferenceId: me.userId,
