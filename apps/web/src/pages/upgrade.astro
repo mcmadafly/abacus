@@ -1,0 +1,314 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Nav from "../components/Nav.astro";
+
+export const prerender = false;
+
+// Yearly = 25% off the monthly rate, billed annually.
+const YEAR_DISCOUNT = 0.75;
+const plans = [
+  {
+    name: "Growth",
+    blurb: "For makers and growing businesses.",
+    monthly: 9,
+    highlight: true,
+    features: [
+      "Unlimited sites",
+      "Up to 1M pageviews/mo",
+      "Daily + weekly digests",
+      "Custom events & goals",
+      "2 years of history",
+    ],
+  },
+  {
+    name: "Scale",
+    blurb: "For high-traffic sites and teams.",
+    monthly: 29,
+    highlight: false,
+    features: [
+      "Up to 10M pageviews/mo",
+      "Team members",
+      "API access",
+      "Priority support",
+      "Data export",
+    ],
+  },
+];
+const money = (n: number) =>
+  Number.isInteger(n) ? `${n}` : n.toFixed(2).replace(/0$/, "");
+const priced = plans.map((p) => {
+  const yearlyTotal = Math.round(p.monthly * 12 * YEAR_DISCOUNT);
+  return {
+    ...p,
+    monthlyStr: money(p.monthly),
+    yearlyPerMoStr: money(Math.round((yearlyTotal / 12) * 100) / 100),
+    billedYearly: `$${yearlyTotal}/yr billed annually`,
+  };
+});
+---
+
+<Layout title="Upgrade — Abacus">
+  <Nav />
+  <main class="up">
+    <div class="wrap">
+      <div class="up__head">
+        <span class="eyebrow"><span class="dot"></span>Upgrade</span>
+        <h1>Choose your plan</h1>
+        <p class="up__lead">
+          Track more sites, unlock team features and longer history. Switch or
+          cancel anytime.
+        </p>
+        <div class="up__toggle" data-billing>
+          <button type="button" data-cycle="monthly" class="is-active">
+            Monthly
+          </button>
+          <button type="button" data-cycle="yearly">
+            Yearly <span class="up__save">Save 25%</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="up__grid">
+        {
+          priced.map((p) => (
+            <div class={`up__card${p.highlight ? " up__card--hl" : ""}`}>
+              {p.highlight && <span class="up__tag">Most popular</span>}
+              <h3 class="up__name">{p.name}</h3>
+              <p class="up__blurb">{p.blurb}</p>
+              <p class="up__price">
+                <span
+                  class="up__amt"
+                  data-monthly={p.monthlyStr}
+                  data-yearly={p.yearlyPerMoStr}
+                >
+                  ${p.monthlyStr}
+                </span>
+                <span class="up__per">/mo</span>
+              </p>
+              <p
+                class="up__billed"
+                data-billed-monthly="Billed monthly"
+                data-billed-yearly={p.billedYearly}
+              >
+                Billed monthly
+              </p>
+              <button
+                type="button"
+                class={`btn ${p.highlight ? "btn--dark" : "btn--ghost"} up__cta`}
+                style="width:100%;justify-content:center"
+              >
+                Choose {p.name} <span class="arrow">→</span>
+              </button>
+              <ul class="up__list">
+                {p.features.map((f) => (
+                  <li>
+                    <span class="up__check">✓</span>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))
+        }
+      </div>
+      <p class="up__foot">
+        On the free plan you can track one site. Questions about billing?
+        <a href="mailto:hello@abacuslytics.com">Get in touch</a>.
+      </p>
+    </div>
+  </main>
+
+  <script>
+    const wrap = document.querySelector<HTMLElement>("[data-billing]");
+    let cycle: "monthly" | "yearly" = "monthly";
+    const cap = (s: string) => s[0]!.toUpperCase() + s.slice(1);
+    function apply() {
+      document.querySelectorAll<HTMLElement>(".up__amt").forEach((el) => {
+        el.textContent = `$${el.dataset[cycle] ?? ""}`;
+      });
+      document.querySelectorAll<HTMLElement>(".up__billed").forEach((el) => {
+        el.textContent = el.dataset[`billed${cap(cycle)}`] ?? "";
+      });
+      wrap
+        ?.querySelectorAll<HTMLElement>("button")
+        .forEach((b) => b.classList.toggle("is-active", b.dataset.cycle === cycle));
+    }
+    wrap?.querySelectorAll<HTMLElement>("button").forEach((b) =>
+      b.addEventListener("click", () => {
+        cycle = (b.dataset.cycle as "monthly" | "yearly") ?? "monthly";
+        apply();
+      }),
+    );
+    document.querySelectorAll<HTMLButtonElement>(".up__cta").forEach((b) =>
+      b.addEventListener("click", () => {
+        b.textContent = "Selected — checkout coming soon ✓";
+        b.disabled = true;
+      }),
+    );
+  </script>
+
+  <style>
+    .up {
+      flex: 1;
+      padding: 110px 0 90px;
+    }
+    .up__head {
+      text-align: center;
+      max-width: 640px;
+      margin: 0 auto 44px;
+    }
+    .up__head h1 {
+      font-family: var(--serif);
+      font-size: clamp(2rem, 4vw, 2.9rem);
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      margin-top: 14px;
+    }
+    .up__lead {
+      color: var(--ink-soft);
+      margin-top: 12px;
+      font-size: 1rem;
+    }
+    .up__toggle {
+      display: inline-flex;
+      gap: 3px;
+      margin-top: 26px;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--bg-2);
+    }
+    .up__toggle button {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--ink-soft);
+      font: inherit;
+      font-size: 0.9rem;
+      font-weight: 500;
+      padding: 8px 18px;
+      border-radius: 999px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .up__toggle button.is-active {
+      background: var(--indigo);
+      color: #fff;
+    }
+    .up__save {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.03em;
+      background: var(--iris-wash);
+      color: var(--indigo-d);
+      padding: 2px 7px;
+      border-radius: 999px;
+    }
+    .up__toggle button.is-active .up__save {
+      background: rgba(255, 255, 255, 0.22);
+      color: #fff;
+    }
+    .up__grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      max-width: 760px;
+      margin: 0 auto;
+    }
+    .up__card {
+      position: relative;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 30px;
+      box-shadow: var(--shadow-soft);
+    }
+    .up__card--hl {
+      border-color: var(--indigo);
+      box-shadow: var(--shadow-card);
+    }
+    .up__tag {
+      position: absolute;
+      top: 22px;
+      right: 22px;
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #fff;
+      background: var(--indigo);
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+    .up__name {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 1.5rem;
+    }
+    .up__blurb {
+      color: var(--ink-mute);
+      font-size: 0.9rem;
+      margin-top: 4px;
+    }
+    .up__price {
+      margin: 20px 0 2px;
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+    .up__amt {
+      font-family: var(--serif);
+      font-size: 2.6rem;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+    }
+    .up__per {
+      color: var(--ink-mute);
+      font-family: var(--mono);
+      font-size: 0.8rem;
+    }
+    .up__billed {
+      color: var(--ink-mute);
+      font-family: var(--mono);
+      font-size: 0.66rem;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+    .up__list {
+      list-style: none;
+      margin-top: 22px;
+      display: grid;
+      gap: 11px;
+    }
+    .up__list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      font-size: 0.92rem;
+      color: var(--ink-soft);
+    }
+    .up__check {
+      color: var(--indigo);
+      font-weight: 700;
+    }
+    .up__foot {
+      text-align: center;
+      color: var(--ink-mute);
+      font-size: 0.85rem;
+      margin-top: 34px;
+    }
+    .up__foot a {
+      color: var(--indigo);
+    }
+    @media (max-width: 720px) {
+      .up__grid {
+        grid-template-columns: 1fr;
+        max-width: 420px;
+      }
+    }
+  </style>
+</Layout>

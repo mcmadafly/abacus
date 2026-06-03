@@ -1,0 +1,104 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import AppHeader from "../../components/AppHeader.astro";
+import AppSidebar from "../../components/AppSidebar.astro";
+import { createDb, digestSubscriptions } from "@abacus/db";
+import {
+  FREE_SITE_LIMIT,
+  createSite,
+  ensureAccount,
+  getAccount,
+  listSites,
+  trialDaysLeft,
+} from "../../lib/account";
+import { resolveUser } from "../../lib/auth";
+
+export const prerender = false;
+
+const me = await resolveUser(Astro.locals);
+if (!me) return Astro.redirect("/sign-in");
+const { userId, email } = me;
+
+const db = createDb(Astro.locals.runtime.env.DB);
+await ensureAccount(db, userId, email);
+
+let error: string | null = null;
+let upgrade = false;
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  const domain = String(form.get("domain") ?? "");
+  const result = await createSite(db, userId, domain);
+  if (result.ok) {
+    await db
+      .insert(digestSubscriptions)
+      .values({ siteId: result.site.id, email })
+      .onConflictDoNothing();
+    return Astro.redirect(`/app/${result.site.id}`);
+  }
+  error = result.error;
+  upgrade = result.upgrade ?? false;
+}
+
+const sites = await listSites(db, userId);
+const atLimit = sites.length >= FREE_SITE_LIMIT;
+const daysLeft = trialDaysLeft(await getAccount(db, userId));
+---
+
+<Layout title="Add a site — Abacus">
+  <AppHeader crumb="Add site" />
+  <div class="appshell">
+    <AppSidebar sites={sites} daysLeft={daysLeft} />
+    <main class="dmain appmain">
+      <div class="dtop">
+        <div class="dhello">Add a site</div>
+      </div>
+      <p class="dhello__sub">Start tracking a new domain.</p>
+
+      {
+        atLimit ? (
+          <div class="appupsell">
+            <p class="appupsell__tag">● Free plan limit</p>
+            <h2 class="appupsell__h">You're using your 1 free site</h2>
+            <p class="appupsell__p">
+              The free plan includes a single site. Upgrade to Growth or Scale to
+              track unlimited domains, add team members, and more.
+            </p>
+            <a href="/upgrade" class="appbtn appupsell__cta">
+              Upgrade to add more <span class="arrow">→</span>
+            </a>
+          </div>
+        ) : (
+          <form method="POST" class="appform">
+            <label for="domain" class="appform__label">
+              Domain
+            </label>
+            <div class="appform__row">
+              <input
+                id="domain"
+                name="domain"
+                type="text"
+                required
+                placeholder="example.com"
+                class="appform__input"
+              />
+              <button type="submit" class="appbtn">
+                Add site
+              </button>
+            </div>
+            {error && (
+              <p class="appform__err">
+                {error}
+                {upgrade && (
+                  <a href="/upgrade" class="appform__errlink">
+                    Upgrade →
+                  </a>
+                )}
+              </p>
+            )}
+          </form>
+        )
+      }
+    </main>
+  </div>
+</Layout>

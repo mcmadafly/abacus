@@ -62,7 +62,9 @@ const tiers = [
       {
         tiers.map((t) => (
           <div class={`tier${t.highlight ? " tier--hl" : ""} reveal`}>
-            {t.highlight && <span class="tier__tag">Most popular</span>}
+            <span class={`tier__tag${t.highlight ? "" : " tier__tag--ghost"}`}>
+              Most popular
+            </span>
             <h3 class="tier__name">{t.name}</h3>
             <p class="tier__blurb">{t.blurb}</p>
             <p class="tier__price">
@@ -121,6 +123,11 @@ const tiers = [
     border-radius: 999px;
     margin-bottom: 16px;
   }
+  /* Keep the badge's footprint on non-highlight cards so the name, price,
+     button and feature rows line up across all three tiers. */
+  .tier__tag--ghost {
+    visibility: hidden;
+  }
   .tier__name {
     font-family: var(--serif);
     font-weight: 500;
@@ -131,6 +138,7 @@ const tiers = [
     color: var(--ink-mute);
     font-size: 0.9rem;
     margin-top: 4px;
+    min-height: 2.7em;
   }
   .tier__price {
     margin: 22px 0;

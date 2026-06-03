@@ -1,13 +1,16 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import AppHeader from "../../components/AppHeader.astro";
-import { createDb, digestSubscriptions } from "@abacus/db";
+import AppSidebar from "../../components/AppSidebar.astro";
+import { createDb } from "@abacus/db";
 import {
-  createSite,
   ensureAccount,
+  getAccount,
   listSites,
+  trialDaysLeft,
 } from "../../lib/account";
 import { resolveUser } from "../../lib/auth";
+import { getStatsWithDelta, pctDelta } from "../../lib/query";
 
 export const prerender = false;
 
@@ -18,37 +21,62 @@ const { userId, email } = me;
 const db = createDb(Astro.locals.runtime.env.DB);
 await ensureAccount(db, userId, email);
 
-let error: string | null = null;
-
-if (Astro.request.method === "POST") {
-  const form = await Astro.request.formData();
-  const domain = String(form.get("domain") ?? "");
-  const result = await createSite(db, userId, domain);
-  if (result.ok) {
-    // Subscribe the owner to the daily digest for their new site.
-    await db
-      .insert(digestSubscriptions)
-      .values({ siteId: result.site.id, email })
-      .onConflictDoNothing();
-    return Astro.redirect(`/app/${result.site.id}`);
-  }
-  error = result.error;
-}
-
 const sites = await listSites(db, userId);
+
+// One site → straight to its dashboard. None → the welcome screen below.
+if (sites.length === 1) return Astro.redirect(`/app/${sites[0]!.id}`);
+
+const daysLeft = trialDaysLeft(await getAccount(db, userId));
+
+// Range for the cross-site summary.
+const range = Number(Astro.url.searchParams.get("range")) || 30;
+const days = [7, 30, 90].includes(range) ? range : 30;
+const env = Astro.locals.runtime.env;
+const today = new Date();
+const endDay = today.toISOString().slice(0, 10);
+const startDate = new Date(today);
+startDate.setUTCDate(startDate.getUTCDate() - (days - 1));
+const startDay = startDate.toISOString().slice(0, 10);
+
+const compact = (n: number) =>
+  n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}k` : String(n);
+const fmtDelta = (d: number) => `${d >= 0 ? "↑" : "↓"} ${Math.abs(d)}%`;
+
+// Per-site totals for the overview (only computed when there are 2+ sites).
+const rows =
+  sites.length > 1
+    ? await Promise.all(
+        sites.map(async (s) => {
+          const st = await getStatsWithDelta(env, s.id, startDay, endDay, days);
+          return {
+            site: s,
+            visitors: st.visitors,
+            pageviews: st.pageviews,
+            delta: pctDelta(st.prev.pageviews, st.pageviews),
+          };
+        }),
+      )
+    : [];
+rows.sort((a, b) => b.pageviews - a.pageviews);
+
+const totalVisitors = rows.reduce((s, r) => s + r.visitors, 0);
+const totalPageviews = rows.reduce((s, r) => s + r.pageviews, 0);
+const totalPrevPv = rows.reduce(
+  (s, r) => s + (r.delta ? r.pageviews / (1 + r.delta / 100) : r.pageviews),
+  0,
+);
+const aggDelta = pctDelta(totalPrevPv, totalPageviews);
 ---
 
-<Layout title="Your sites — Abacus">
-  <AppHeader />
-  <main class="mx-auto w-full max-w-6xl flex-1 px-6 py-10">
-    <div class="flex items-center justify-between">
-      <h1 class="font-serif text-3xl font-medium tracking-tight">
-        {sites.length === 0 ? "Welcome to Abacus" : "Your sites"}
-      </h1>
-    </div>
+<Layout title="Overview — Abacus">
+  <AppHeader crumb={sites.length > 1 ? "Overview" : undefined} />
 
-    {
-      sites.length === 0 && (
+  {
+    sites.length === 0 ? (
+      <main class="mx-auto w-full max-w-3xl flex-1 px-6 py-16">
+        <h1 class="font-serif text-3xl font-medium tracking-tight">
+          Welcome to Abacus
+        </h1>
         <a
           href="/app/demo"
           class="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[var(--line)] bg-[var(--iris-wash)] p-6 transition-colors hover:border-abacus-500"
@@ -62,67 +90,107 @@ const sites = await listSites(db, userId);
             </h2>
             <p class="mt-1 max-w-lg text-sm text-[var(--ink-soft)]">
               Explore a real dashboard — Abacus tracking its own website — before
-              you add your own domain below.
+              you add your own domain.
             </p>
           </div>
           <span class="rounded-lg bg-abacus-600 px-5 py-2.5 text-sm font-medium text-white">
             Open the live demo →
           </span>
         </a>
-      )
-    }
-
-    <!-- Add site -->
-    <form
-      method="POST"
-      class="mt-6 flex flex-col gap-3 rounded-xl border border-[var(--line)] p-5 sm:flex-row sm:items-center"
-    >
-      <label for="domain" class="text-sm font-medium text-[var(--ink-soft)]">
-        Add a site
-      </label>
-      <input
-        id="domain"
-        name="domain"
-        type="text"
-        required
-        placeholder="example.com"
-        class="flex-1 rounded-lg border border-[var(--line)] px-3 py-2 text-sm focus:border-abacus-500 focus:outline-none focus:ring-1 focus:ring-abacus-500"
-      />
-      <button
-        type="submit"
-        class="rounded-lg bg-abacus-600 px-4 py-2 text-sm font-medium text-white hover:bg-abacus-700"
-      >
-        Add site
-      </button>
-    </form>
-    {error && <p class="mt-2 text-sm text-red-600">{error}</p>}
-
-    <!-- Site list -->
-    <div class="mt-8">
-      {
-        sites.length === 0 ? (
-          <div class="rounded-xl border border-dashed border-[var(--line)] p-10 text-center">
-            <p class="text-[var(--ink-mute)]">
-              No sites of your own yet — add a domain above, or
-              <a href="/app/demo" class="text-abacus-600">explore the live demo</a>.
-            </p>
-          </div>
-        ) : (
-          <ul class="divide-y divide-[var(--line-soft)] rounded-xl border border-[var(--line)]">
-            {sites.map((s) => (
-              <li>
+        <a
+          href="/app/new"
+          class="mt-4 inline-flex items-center gap-2 rounded-lg bg-abacus-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-abacus-700"
+        >
+          Add your first site →
+        </a>
+      </main>
+    ) : (
+      <div class="appshell">
+        <AppSidebar sites={sites} activeId="overview" daysLeft={daysLeft} />
+        <main class="dmain appmain">
+          <div class="dtop">
+            <div class="dhello">Overview</div>
+            <div class="appranges">
+              {[7, 30, 90].map((d) => (
                 <a
-                  href={`/app/${s.id}`}
-                  class="flex items-center justify-between px-5 py-4 hover:bg-[var(--bg-2)]"
+                  href={`?range=${d}`}
+                  class={`appranges__btn${d === days ? " is-active" : ""}`}
                 >
-                  <span class="font-medium">{s.domain}</span>
-                  <span class="text-sm text-abacus-600">View dashboard →</span>
+                  {d}d
                 </a>
-              </li>
-            ))}
-          </ul>
-        )
-      }
-    </div>
-  </main>
+              ))}
+            </div>
+          </div>
+          <p class="dhello__sub">
+            Summary across your {sites.length} sites · last {days} days.
+          </p>
+
+          <div class="dstats appstats">
+            <div class="dstat">
+              <div class="dstat__top">
+                <span class="dstat__label">Total visitors</span>
+              </div>
+              <div class="dstat__val">{compact(totalVisitors)}</div>
+            </div>
+            <div class="dstat">
+              <div class="dstat__top">
+                <span class="dstat__label">Total pageviews</span>
+              </div>
+              <div class="dstat__val">{compact(totalPageviews)}</div>
+              <div class={`dstat__delta${aggDelta < 0 ? " dn" : ""}`}>
+                {fmtDelta(aggDelta)} vs prev {days}d
+              </div>
+            </div>
+            <div class="dstat">
+              <div class="dstat__top">
+                <span class="dstat__label">Sites</span>
+              </div>
+              <div class="dstat__val">{sites.length}</div>
+            </div>
+            <div class="dstat">
+              <div class="dstat__top">
+                <span class="dstat__label">Range</span>
+              </div>
+              <div class="dstat__val">{days}d</div>
+            </div>
+          </div>
+
+          <div class="dchart" style="padding-bottom:16px">
+            <div class="dpanel__head">
+              <span class="dpanel__title">Sites</span>
+              <span class="dpanel__link">Pageviews · visitors</span>
+            </div>
+            <table class="dorders">
+              <thead>
+                <tr>
+                  <th>Site</th>
+                  <th class="r">Visitors</th>
+                  <th class="r">Pageviews</th>
+                  <th class="r">Δ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr
+                    onclick={`location.href='/app/${r.site.id}'`}
+                    style="cursor:pointer"
+                  >
+                    <td>{r.site.domain}</td>
+                    <td class="r tabular-nums">{r.visitors.toLocaleString()}</td>
+                    <td class="r tabular-nums">{r.pageviews.toLocaleString()}</td>
+                    <td
+                      class="r tpct"
+                      style={r.delta < 0 ? "color:var(--bad,#c0563b)" : ""}
+                    >
+                      {fmtDelta(r.delta)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </main>
+      </div>
+    )
+  }
 </Layout>

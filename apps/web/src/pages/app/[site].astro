@@ -1,16 +1,19 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import AppHeader from "../../components/AppHeader.astro";
+import AppSidebar from "../../components/AppSidebar.astro";
 import BarList from "../../components/BarList.astro";
 import { createDb } from "@abacus/db";
 import {
   DEMO_SITE_ID,
+  getAccount,
   getDemoSite,
   getSite,
   listSites,
+  trialDaysLeft,
 } from "../../lib/account";
 import { resolveUser } from "../../lib/auth";
-import { getStats } from "../../lib/query";
+import { getStatsWithDelta, pctDelta } from "../../lib/query";
 
 export const prerender = false;
 
@@ -30,6 +33,7 @@ if (!site) return Astro.redirect("/app");
 
 // Sidebar nav: the signed-in user's own sites (the demo is listed separately).
 const mySites = await listSites(db, userId);
+const daysLeft = trialDaysLeft(await getAccount(db, userId));
 
 // Range: ?range=7|30|90 (days), default 7.
 const range = Number(Astro.url.searchParams.get("range")) || 7;
@@ -41,11 +45,11 @@ const startDate = new Date(today);
 startDate.setUTCDate(startDate.getUTCDate() - (days - 1));
 const startDay = startDate.toISOString().slice(0, 10);
 
-const stats = await getStats(env, site.id, startDay, endDay);
+const stats = await getStatsWithDelta(env, site.id, startDay, endDay, days);
 const hasData = stats.pageviews > 0;
 
-// Build a complete, zero-filled day series so the chart always spans the full
-// range (the AE query only returns days that actually had traffic).
+// Build complete, zero-filled per-day series so the chart + sparklines always
+// span the full range (the AE query only returns days that had traffic).
 const byDay = new Map(stats.byDay.map((d) => [d.date, d]));
 const dayLabel = (iso: string) =>
   new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-US", {
@@ -53,15 +57,18 @@ const dayLabel = (iso: string) =>
     day: "numeric",
     timeZone: "UTC",
   });
-const series: { date: string; label: string; pageviews: number }[] = [];
+type Day = { date: string; label: string; pageviews: number; visitors: number };
+const series: Day[] = [];
 for (let i = 0; i < days; i++) {
   const dt = new Date(startDate);
   dt.setUTCDate(startDate.getUTCDate() + i);
   const iso = dt.toISOString().slice(0, 10);
+  const d = byDay.get(iso);
   series.push({
     date: iso,
     label: dayLabel(iso),
-    pageviews: byDay.get(iso)?.pageviews ?? 0,
+    pageviews: d?.pageviews ?? 0,
+    visitors: d?.visitors ?? 0,
   });
 }
 // 5 evenly-spaced x-axis ticks.
@@ -71,21 +78,46 @@ const axisIdx = Array.from({ length: 5 }, (_, i) =>
 
 const compact = (n: number) =>
   n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}k` : String(n);
-const viewsPerVisitor = stats.visitors
-  ? (stats.pageviews / stats.visitors).toFixed(1)
-  : "0.0";
+const vpv = (pv: number, vis: number) => (vis ? pv / vis : 0);
+const fmtDelta = (d: number) => `${d >= 0 ? "↑" : "↓"} ${Math.abs(d)}%`;
 
+const sparks = {
+  visitors: series.map((s) => s.visitors),
+  pageviews: series.map((s) => s.pageviews),
+  vpv: series.map((s) => Math.round(vpv(s.pageviews, s.visitors) * 10) / 10),
+};
+
+// Stat cards carry a metric key (for the sparkline), a value, and a
+// period-over-period delta vs the immediately preceding window.
 const cards = [
-  { label: "Unique visitors", value: compact(stats.visitors) },
-  { label: "Pageviews", value: compact(stats.pageviews) },
-  { label: "Views / visitor", value: viewsPerVisitor },
-  { label: "Range", value: `${days}d` },
+  {
+    metric: "visitors" as const,
+    label: "Unique visitors",
+    value: compact(stats.visitors),
+    delta: pctDelta(stats.prev.visitors, stats.visitors),
+  },
+  {
+    metric: "pageviews" as const,
+    label: "Pageviews",
+    value: compact(stats.pageviews),
+    delta: pctDelta(stats.prev.pageviews, stats.pageviews),
+  },
+  {
+    metric: "vpv" as const,
+    label: "Views / visitor",
+    value: vpv(stats.pageviews, stats.visitors).toFixed(1),
+    delta: pctDelta(
+      vpv(stats.prev.pageviews, stats.prev.visitors),
+      vpv(stats.pageviews, stats.visitors),
+    ),
+  },
 ];
 
 const snippet = `<script defer data-domain="${site.domain}"\n  src="${Astro.url.origin}/abacus.js"></script>`;
 const chartData = JSON.stringify({
   labels: series.map((s) => s.label),
   pageviews: series.map((s) => s.pageviews),
+  sparks,
 });
 ---
 
@@ -93,48 +125,11 @@ const chartData = JSON.stringify({
   <AppHeader crumb={site.domain} />
 
   <div class="appshell">
-    <!-- left nav: the user's sites + the live demo -->
-    <aside class="dside appside">
-      <div class="dside__label">Your sites</div>
-      {
-        mySites.length === 0 && (
-          <p class="appside__empty">No sites yet.</p>
-        )
-      }
-      {
-        mySites.map((s) => (
-          <a
-            href={`/app/${s.id}`}
-            class={`dnav${s.id === site.id ? " is-active" : ""}`}
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <circle cx="12" cy="12" r="9" />
-              <path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18" />
-            </svg>
-            <span class="appside__dom">{s.domain}</span>
-            {s.id === site.id && <span class="live">Live</span>}
-          </a>
-        ))
-      }
-
-      <div class="dside__label">Explore</div>
-      <a
-        href="/app/demo"
-        class={`dnav${isDemo ? " is-active" : ""}`}
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
-          <circle cx="12" cy="12" r="3" />
-        </svg>
-        <span class="appside__dom">Live demo</span>
-      </a>
-      <a href="/app" class="dnav">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path d="M12 5v14M5 12h14" />
-        </svg>
-        <span class="appside__dom">Add site</span>
-      </a>
-    </aside>
+    <AppSidebar
+      sites={mySites}
+      activeId={isDemo ? "demo" : site.id}
+      daysLeft={daysLeft}
+    />
 
     <!-- main -->
     <main class="dmain appmain">
@@ -148,7 +143,7 @@ const chartData = JSON.stringify({
                 looks like. Add your domain to start measuring yours.
               </p>
             </div>
-            <a href="/app" class="appbtn">Add your site →</a>
+            <a href="/app/new" class="appbtn">Add your site →</a>
           </div>
         )
       }
@@ -196,11 +191,27 @@ const chartData = JSON.stringify({
             <div class="dstat">
               <div class="dstat__top">
                 <span class="dstat__label">{c.label}</span>
+                {hasData && (
+                  <span class="dstat__spark">
+                    <canvas data-spark={c.metric} width="46" height="18" />
+                  </span>
+                )}
               </div>
               <div class="dstat__val">{c.value}</div>
+              {hasData && (
+                <div class={`dstat__delta${c.delta < 0 ? " dn" : ""}`}>
+                  {fmtDelta(c.delta)} vs prev {days}d
+                </div>
+              )}
             </div>
           ))
         }
+        <div class="dstat">
+          <div class="dstat__top">
+            <span class="dstat__label">Range</span>
+          </div>
+          <div class="dstat__val">{days}d</div>
+        </div>
       </div>
 
       <!-- pageviews trend -->
@@ -258,6 +269,8 @@ const chartData = JSON.stringify({
         LineController,
         LineElement,
         PointElement,
+        BarController,
+        BarElement,
         LinearScale,
         CategoryScale,
         Filler,
@@ -268,6 +281,8 @@ const chartData = JSON.stringify({
         LineController,
         LineElement,
         PointElement,
+        BarController,
+        BarElement,
         LinearScale,
         CategoryScale,
         Filler,
@@ -275,12 +290,46 @@ const chartData = JSON.stringify({
       );
 
       const el = document.getElementById("trend-data");
+      const data = JSON.parse(el?.textContent || "{}") as {
+        labels: string[];
+        pageviews: number[];
+        sparks: Record<string, number[]>;
+      };
+
+      // Per-metric sparklines in the stat strip.
+      document.querySelectorAll<HTMLCanvasElement>("canvas[data-spark]").forEach((cv) => {
+        const arr = data.sparks?.[cv.dataset.spark || ""] || [];
+        const colors = arr.map((_, i) =>
+          i === arr.length - 1 ? "#7c5cff" : "rgba(124,92,255,0.45)",
+        );
+        new Chart(cv.getContext("2d")!, {
+          type: "bar",
+          data: {
+            labels: arr.map(() => ""),
+            datasets: [
+              {
+                data: arr,
+                backgroundColor: colors,
+                borderRadius: 2,
+                barPercentage: 0.72,
+                categoryPercentage: 0.86,
+              },
+            ],
+          },
+          options: {
+            responsive: false,
+            animation: false,
+            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+            scales: {
+              x: { display: false },
+              y: { display: false, beginAtZero: true },
+            },
+          },
+        });
+      });
+
       const canvas = document.getElementById("trendChart") as HTMLCanvasElement | null;
-      if (el && canvas) {
-        const data = JSON.parse(el.textContent || "{}") as {
-          labels: string[];
-          pageviews: number[];
-        };
+      if (canvas) {
         const ctx = canvas.getContext("2d")!;
         const grad = ctx.createLinearGradient(0, 0, 0, 168);
         grad.addColorStop(0, "rgba(91,70,229,0.30)");

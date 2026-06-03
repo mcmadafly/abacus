@@ -478,30 +478,39 @@ const sourceInitials: Record<string, string> = {
       </div>
     </section>
 
-    <!-- ============ STATS BAND ============ -->
-    <section class="sec" id="trusted">
-      <div class="wrap">
-        <div class="band">
-          <div class="band__intro reveal">
-            Trusted by indie hackers, startups and privacy-minded teams <em
-              style="color:var(--indigo)">in 60+ countries.</em
-            >
+    {/* ============ STATS BAND (hidden for now — aspirational numbers) ============ */}
+    {
+      false && (
+        <section class="sec" id="trusted">
+          <div class="wrap">
+            <div class="band">
+              <div class="band__intro reveal">
+                Trusted by indie hackers, startups and privacy-minded teams{" "}
+                <em style="color:var(--indigo)">in 60+ countries.</em>
+              </div>
+              <div class="reveal">
+                <div class="metric__num">
+                  <em>14</em>B
+                </div>
+                <div class="metric__label">Events counted / mo</div>
+              </div>
+              <div class="reveal">
+                <div class="metric__num">
+                  <em>9.8</em>k
+                </div>
+                <div class="metric__label">Sites measured</div>
+              </div>
+              <div class="reveal">
+                <div class="metric__num">
+                  <em>0</em>
+                </div>
+                <div class="metric__label">Cookies set, ever</div>
+              </div>
+            </div>
           </div>
-          <div class="reveal">
-            <div class="metric__num"><em>14</em>B</div>
-            <div class="metric__label">Events counted / mo</div>
-          </div>
-          <div class="reveal">
-            <div class="metric__num"><em>9.8</em>k</div>
-            <div class="metric__label">Sites measured</div>
-          </div>
-          <div class="reveal">
-            <div class="metric__num"><em>0</em></div>
-            <div class="metric__label">Cookies set, ever</div>
-          </div>
-        </div>
-      </div>
-    </section>
+        </section>
+      )
+    }
 
     <!-- ============ PRICING ============ -->
     <Pricing />

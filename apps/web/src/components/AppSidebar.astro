@@ -1,0 +1,80 @@
+---
+import type { Site } from "@abacus/db";
+
+interface Props {
+  sites: Site[];
+  /** Id of the active site, "demo", or "overview" for the summary page. */
+  activeId?: string;
+  /** Whole days left in the feature trial (0 = lapsed). */
+  daysLeft: number;
+}
+const { sites, activeId, daysLeft } = Astro.props;
+const multi = sites.length > 1;
+---
+
+<aside class="dside appside">
+  {
+    multi && (
+      <>
+        <div class="dside__label">Overview</div>
+        <a href="/app" class={`dnav${activeId === "overview" ? " is-active" : ""}`}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="3" y="3" width="7" height="7" rx="1" />
+            <rect x="14" y="3" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" />
+            <rect x="14" y="14" width="7" height="7" rx="1" />
+          </svg>
+          <span class="appside__dom">All sites</span>
+        </a>
+      </>
+    )
+  }
+
+  <div class="dside__label">Your sites</div>
+  {sites.length === 0 && <p class="appside__empty">No sites yet.</p>}
+  {
+    sites.map((s) => (
+      <a
+        href={`/app/${s.id}`}
+        class={`dnav${s.id === activeId ? " is-active" : ""}`}
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18" />
+        </svg>
+        <span class="appside__dom">{s.domain}</span>
+        {s.id === activeId && <span class="live">Live</span>}
+      </a>
+    ))
+  }
+
+  <div class="dside__label">Explore</div>
+  <a href="/app/demo" class={`dnav${activeId === "demo" ? " is-active" : ""}`}>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+    <span class="appside__dom">Live demo</span>
+  </a>
+  <a href="/app/new" class="dnav">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+    <span class="appside__dom">Add site</span>
+  </a>
+
+  <div class="appside__foot">
+    {
+      daysLeft > 0 ? (
+        <p class="appside__trial">
+          {daysLeft} day{daysLeft === 1 ? "" : "s"} left in your trial
+        </p>
+      ) : (
+        <p class="appside__trial appside__trial--ended">Trial ended · Free plan</p>
+      )
+    }
+    <a href="/upgrade" class="appside__upgrade">
+      Upgrade <span class="arrow">↑</span>
+    </a>
+  </div>
+</aside>

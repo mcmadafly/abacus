@@ -676,6 +676,12 @@ section { position: relative; }
 .appside .dside__label:first-child { padding-top: 0; }
 .appside__dom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .appside__empty { color: var(--ink-mute); font-size: 0.82rem; padding: 4px 10px 8px; }
+.appside__foot { margin-top: auto; padding-top: 18px; }
+.appside__trial { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.03em; color: var(--ink-mute); text-transform: uppercase; padding: 0 10px 8px; }
+.appside__trial--ended { color: var(--warn, var(--ink-mute)); }
+.appside__upgrade { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 12px; border-radius: 9px; background: var(--iris-wash); color: var(--indigo-d); font-size: 0.82rem; font-weight: 600; transition: background .15s; }
+.appside__upgrade:hover { background: var(--indigo); color: #fff; }
+.appside__upgrade .arrow { font-weight: 700; }
 .appmain.dmain { padding: 28px 32px 56px; }
 
 .appranges { display: inline-flex; gap: 2px; border: 1px solid var(--line); border-radius: 9px; padding: 3px; }
@@ -699,6 +705,20 @@ section { position: relative; }
 .appsnippet__p code { background: var(--bg-2); border-radius: 4px; padding: 1px 5px; font-family: var(--mono); font-size: 0.8em; }
 .appsnippet__pre { margin-top: 14px; overflow-x: auto; border-radius: 10px; background: var(--slate); padding: 16px; }
 .appsnippet__pre code { font-family: var(--mono); font-size: 0.74rem; color: oklch(0.94 0.01 285); white-space: pre; }
+
+/* add-site form + free-plan upsell (/app/new) */
+.appform { margin-top: 22px; max-width: 520px; }
+.appform__label { font-size: 0.8rem; font-weight: 500; color: var(--ink-soft); }
+.appform__row { display: flex; gap: 10px; margin-top: 8px; }
+.appform__input { flex: 1; border: 1px solid var(--line); border-radius: 9px; padding: 9px 12px; font-size: 0.9rem; background: var(--bg-2); color: var(--ink); }
+.appform__input:focus { outline: none; border-color: var(--indigo); }
+.appform__err { margin-top: 10px; font-size: 0.85rem; color: var(--bad, #c0563b); display: flex; gap: 8px; align-items: center; }
+.appform__errlink { color: var(--indigo); font-weight: 600; }
+.appupsell { margin-top: 22px; max-width: 560px; border: 1px solid var(--indigo); border-radius: 14px; padding: 26px; background: var(--iris-wash); }
+.appupsell__tag { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--indigo-d); }
+.appupsell__h { font-family: var(--serif); font-size: 1.4rem; font-weight: 500; margin-top: 8px; }
+.appupsell__p { margin-top: 8px; font-size: 0.9rem; color: var(--ink-soft); line-height: 1.55; }
+.appupsell__cta { margin-top: 18px; display: inline-flex; }
 
 @media (max-width: 860px) {
   .appshell { grid-template-columns: 1fr; }

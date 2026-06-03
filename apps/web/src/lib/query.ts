@@ -172,8 +172,42 @@ function esc(v: string): string {
   return v.replace(/'/g, "''");
 }
 
-export function addDay(day: string): string {
+export function addDay(day: string, n = 1): string {
   const d = new Date(`${day}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + 1);
+  d.setUTCDate(d.getUTCDate() + n);
   return d.toISOString().slice(0, 10);
+}
+
+export interface StatsWithDelta extends SiteStats {
+  /** Totals for the immediately preceding window of equal length. */
+  prev: { pageviews: number; visitors: number };
+}
+
+/**
+ * Like `getStats`, but also fetches the immediately-preceding window of equal
+ * length so the dashboard can show period-over-period deltas ("↑ 22.8%").
+ */
+export async function getStatsWithDelta(
+  env: Env,
+  siteId: string,
+  startDay: string,
+  endDay: string,
+  days: number,
+): Promise<StatsWithDelta> {
+  const prevEnd = addDay(startDay, -1);
+  const prevStart = addDay(startDay, -days);
+  const [cur, prev] = await Promise.all([
+    getStats(env, siteId, startDay, endDay),
+    getStats(env, siteId, prevStart, prevEnd),
+  ]);
+  return {
+    ...cur,
+    prev: { pageviews: prev.pageviews, visitors: prev.visitors },
+  };
+}
+
+/** Percent change a→b, rounded to one decimal. 0 when the base is 0. */
+export function pctDelta(prev: number, cur: number): number {
+  if (!prev) return 0;
+  return Math.round(((cur - prev) / prev) * 1000) / 10;
 }
