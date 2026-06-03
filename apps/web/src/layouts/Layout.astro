@@ -43,15 +43,16 @@ const {
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content={new URL("/og.jpg", Astro.url).href} />
     <!-- Abacus eats its own dog food: the marketing site is tracked by Abacus
-         itself, feeding the public "live demo" dashboard. data-allow-local lets
-         it record during local dev; we skip the app/auth/api routes. -->
+         into the "abacuslytics.com" site in the dashboard. We skip the
+         app/auth/api routes so logged-in usage doesn't inflate marketing stats.
+         (No data-allow-local: the absolute src means local dev would otherwise
+         report into production — so the tracker stays off on localhost.) -->
     <script
       is:inline
       defer
       data-domain="abacuslytics.com"
-      data-allow-local
       data-exclude="/app/*,/sign-in/*,/sign-up/*,/api/*"
-      src="/abacus.js"></script>
+      src="https://abacuslytics.com/abacus.js"></script>
   </head>
   <body>
     <slot />
