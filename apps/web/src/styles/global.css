@@ -667,3 +667,45 @@ section { position: relative; }
 
 /* ---------- editorial helpers for app/auth pages ---------- */
 .authwrap { flex: 1; display: grid; place-items: center; padding: 64px 22px; position: relative; }
+
+/* ============================================================
+   APP DASHBOARD (/app/[site]) — reuses the demo's .dside/.dstats/.dchart
+   ============================================================ */
+.appshell { flex: 1; width: 100%; max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: 232px minmax(0, 1fr); }
+.appside.dside { background: transparent; border-right: 1px solid var(--line-soft); padding: 24px 14px; gap: 2px; }
+.appside .dside__label:first-child { padding-top: 0; }
+.appside__dom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.appside__empty { color: var(--ink-mute); font-size: 0.82rem; padding: 4px 10px 8px; }
+.appmain.dmain { padding: 28px 32px 56px; }
+
+.appranges { display: inline-flex; gap: 2px; border: 1px solid var(--line); border-radius: 9px; padding: 3px; }
+.appranges__btn { padding: 4px 13px; border-radius: 6px; font-size: 0.8rem; font-weight: 500; color: var(--ink-soft); transition: background .15s, color .15s; }
+.appranges__btn:hover { color: var(--ink); }
+.appranges__btn.is-active { background: var(--indigo); color: #fff; }
+
+.appstats { margin-top: 18px; }
+.appchart__empty { display: grid; place-items: center; height: 100%; color: var(--ink-mute); font-size: 0.85rem; }
+.appbreak { margin-top: 16px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+
+.appdemo { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 22px; padding: 16px 18px; border: 1px solid var(--line); border-radius: 13px; background: var(--iris-wash); }
+.appdemo__tag { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--indigo-d); }
+.appdemo__txt { margin-top: 4px; font-size: 0.85rem; color: var(--ink-soft); max-width: 60ch; }
+.appbtn { flex: none; background: var(--indigo); color: #fff; font-size: 0.82rem; font-weight: 500; padding: 9px 15px; border-radius: 9px; transition: background .15s; }
+.appbtn:hover { background: var(--indigo-d); }
+
+.appsnippet { margin-top: 20px; padding: 22px; border: 1px dashed var(--line); border-radius: 14px; }
+.appsnippet__h { font-family: var(--serif); font-size: 1.3rem; font-weight: 500; }
+.appsnippet__p { margin-top: 4px; font-size: 0.86rem; color: var(--ink-soft); }
+.appsnippet__p code { background: var(--bg-2); border-radius: 4px; padding: 1px 5px; font-family: var(--mono); font-size: 0.8em; }
+.appsnippet__pre { margin-top: 14px; overflow-x: auto; border-radius: 10px; background: var(--slate); padding: 16px; }
+.appsnippet__pre code { font-family: var(--mono); font-size: 0.74rem; color: oklch(0.94 0.01 285); white-space: pre; }
+
+@media (max-width: 860px) {
+  .appshell { grid-template-columns: 1fr; }
+  .appside.dside { display: none; }
+  .appmain.dmain { padding: 22px 20px 44px; }
+  .appbreak { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .appstats { grid-template-columns: 1fr 1fr; }
+}

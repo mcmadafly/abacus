@@ -3,7 +3,12 @@ import Layout from "../../layouts/Layout.astro";
 import AppHeader from "../../components/AppHeader.astro";
 import BarList from "../../components/BarList.astro";
 import { createDb } from "@abacus/db";
-import { DEMO_SITE_ID, getDemoSite, getSite } from "../../lib/account";
+import {
+  DEMO_SITE_ID,
+  getDemoSite,
+  getSite,
+  listSites,
+} from "../../lib/account";
 import { resolveUser } from "../../lib/auth";
 import { getStats } from "../../lib/query";
 
@@ -20,10 +25,11 @@ const siteId = Astro.params.site!;
 // The demo site is public/read-only — viewable by any signed-in user; all other
 // sites are scoped to their owner.
 const isDemo = siteId === DEMO_SITE_ID;
-const site = isDemo
-  ? await getDemoSite(db)
-  : await getSite(db, userId, siteId);
+const site = isDemo ? await getDemoSite(db) : await getSite(db, userId, siteId);
 if (!site) return Astro.redirect("/app");
+
+// Sidebar nav: the signed-in user's own sites (the demo is listed separately).
+const mySites = await listSites(db, userId);
 
 // Range: ?range=7|30|90 (days), default 7.
 const range = Number(Astro.url.searchParams.get("range")) || 7;
@@ -36,132 +42,293 @@ startDate.setUTCDate(startDate.getUTCDate() - (days - 1));
 const startDay = startDate.toISOString().slice(0, 10);
 
 const stats = await getStats(env, site.id, startDay, endDay);
-
-const maxDay = Math.max(1, ...stats.byDay.map((d) => d.pageviews));
 const hasData = stats.pageviews > 0;
 
+// Build a complete, zero-filled day series so the chart always spans the full
+// range (the AE query only returns days that actually had traffic).
+const byDay = new Map(stats.byDay.map((d) => [d.date, d]));
+const dayLabel = (iso: string) =>
+  new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+const series: { date: string; label: string; pageviews: number }[] = [];
+for (let i = 0; i < days; i++) {
+  const dt = new Date(startDate);
+  dt.setUTCDate(startDate.getUTCDate() + i);
+  const iso = dt.toISOString().slice(0, 10);
+  series.push({
+    date: iso,
+    label: dayLabel(iso),
+    pageviews: byDay.get(iso)?.pageviews ?? 0,
+  });
+}
+// 5 evenly-spaced x-axis ticks.
+const axisIdx = Array.from({ length: 5 }, (_, i) =>
+  Math.min(series.length - 1, Math.round(((series.length - 1) * i) / 4)),
+);
+
+const compact = (n: number) =>
+  n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}k` : String(n);
+const viewsPerVisitor = stats.visitors
+  ? (stats.pageviews / stats.visitors).toFixed(1)
+  : "0.0";
+
+const cards = [
+  { label: "Unique visitors", value: compact(stats.visitors) },
+  { label: "Pageviews", value: compact(stats.pageviews) },
+  { label: "Views / visitor", value: viewsPerVisitor },
+  { label: "Range", value: `${days}d` },
+];
+
 const snippet = `<script defer data-domain="${site.domain}"\n  src="${Astro.url.origin}/abacus.js"></script>`;
+const chartData = JSON.stringify({
+  labels: series.map((s) => s.label),
+  pageviews: series.map((s) => s.pageviews),
+});
 ---
 
 <Layout title={`${site.domain} — Abacus`}>
   <AppHeader crumb={site.domain} />
-  <main class="mx-auto w-full max-w-6xl flex-1 px-6 py-10">
-    {
-      isDemo && (
-        <div class="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[var(--line)] bg-[var(--iris-wash)] p-5">
-          <div>
-            <p class="font-mono text-xs uppercase tracking-wide text-abacus-700">
-              ● Live demo
-            </p>
-            <p class="mt-1 text-sm text-[var(--ink-soft)]">
-              This is Abacus tracking its own site — exactly what your own
-              dashboard will look like. Add your domain to start measuring yours.
-            </p>
-          </div>
-          <a
-            href="/app"
-            class="rounded-lg bg-abacus-600 px-4 py-2 text-sm font-medium text-white hover:bg-abacus-700"
-          >
-            Add your site →
-          </a>
-        </div>
-      )
-    }
-    <div class="flex flex-wrap items-center justify-between gap-4">
-      <div>
-        <h1 class="font-serif text-3xl font-medium tracking-tight">{site.domain}</h1>
-        <p class="mt-1 text-sm text-[var(--ink-mute)]">
-          {
-            stats.source === "d1"
-              ? "Showing rolled-up data (live Analytics Engine not configured locally)."
-              : "Live data from Analytics Engine."
-          }
-        </p>
-      </div>
-      <div class="flex gap-1 rounded-lg border border-[var(--line)] p-1 text-sm">
-        {
-          [7, 30, 90].map((d) => (
-            <a
-              href={`?range=${d}`}
-              class={`rounded-md px-3 py-1 ${d === days ? "bg-abacus-600 text-white" : "text-[var(--ink-soft)] hover:bg-[var(--bg-2)]"}`}
-            >
-              {d}d
-            </a>
-          ))
-        }
-      </div>
-    </div>
 
-    {
-      !hasData && (
-        <div class="mt-8 rounded-xl border border-dashed border-[var(--line)] p-8">
-          <h2 class="font-serif text-xl font-medium">Waiting for your first visit</h2>
-          <p class="mt-1 text-sm text-[var(--ink-soft)]">
-            Add this snippet to the <code class="rounded bg-[var(--bg-2)] px-1">
-              &lt;head&gt;
-            </code>{" "}
-            of {site.domain}. Data appears within seconds of your first pageview.
-          </p>
-          <pre class="mt-4 overflow-x-auto rounded-lg bg-[var(--slate)] p-4 text-xs text-gray-100"><code>{snippet}</code></pre>
-        </div>
-      )
-    }
-
-    <!-- Totals -->
-    <div class="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
-      <div class="rounded-xl border border-[var(--line)] p-5">
-        <p class="text-sm text-[var(--ink-mute)]">Unique visitors</p>
-        <p class="mt-1 text-3xl font-bold tabular-nums">
-          {stats.visitors.toLocaleString()}
-        </p>
-      </div>
-      <div class="rounded-xl border border-[var(--line)] p-5">
-        <p class="text-sm text-[var(--ink-mute)]">Pageviews</p>
-        <p class="mt-1 text-3xl font-bold tabular-nums">
-          {stats.pageviews.toLocaleString()}
-        </p>
-      </div>
-      <div class="rounded-xl border border-[var(--line)] p-5">
-        <p class="text-sm text-[var(--ink-mute)]">Views / visitor</p>
-        <p class="mt-1 text-3xl font-bold tabular-nums">
-          {stats.visitors ? (stats.pageviews / stats.visitors).toFixed(1) : "0.0"}
-        </p>
-      </div>
-      <div class="rounded-xl border border-[var(--line)] p-5">
-        <p class="text-sm text-[var(--ink-mute)]">Range</p>
-        <p class="mt-1 text-3xl font-bold tabular-nums">{days}d</p>
-      </div>
-    </div>
-
-    <!-- Trend -->
-    <div class="mt-4 rounded-xl border border-[var(--line)] p-5">
-      <p class="mb-4 text-xs font-semibold uppercase tracking-wide text-[var(--ink-mute)]">
-        Pageviews over time
-      </p>
+  <div class="appshell">
+    <!-- left nav: the user's sites + the live demo -->
+    <aside class="dside appside">
+      <div class="dside__label">Your sites</div>
       {
-        stats.byDay.length === 0 ? (
-          <p class="py-8 text-center text-sm text-[var(--ink-mute)]">No data yet</p>
-        ) : (
-          <div class="flex h-40 items-end gap-1">
-            {stats.byDay.map((d) => (
-              <div class="group flex flex-1 flex-col items-center justify-end">
-                <div
-                  class="w-full rounded-t bg-abacus-500/80 transition-colors group-hover:bg-abacus-600"
-                  style={`height:${(d.pageviews / maxDay) * 100}%`}
-                  title={`${d.date}: ${d.pageviews} pageviews`}
-                />
-              </div>
-            ))}
+        mySites.length === 0 && (
+          <p class="appside__empty">No sites yet.</p>
+        )
+      }
+      {
+        mySites.map((s) => (
+          <a
+            href={`/app/${s.id}`}
+            class={`dnav${s.id === site.id ? " is-active" : ""}`}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18" />
+            </svg>
+            <span class="appside__dom">{s.domain}</span>
+            {s.id === site.id && <span class="live">Live</span>}
+          </a>
+        ))
+      }
+
+      <div class="dside__label">Explore</div>
+      <a
+        href="/app/demo"
+        class={`dnav${isDemo ? " is-active" : ""}`}
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
+        <span class="appside__dom">Live demo</span>
+      </a>
+      <a href="/app" class="dnav">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+        <span class="appside__dom">Add site</span>
+      </a>
+    </aside>
+
+    <!-- main -->
+    <main class="dmain appmain">
+      {
+        isDemo && (
+          <div class="appdemo">
+            <div>
+              <p class="appdemo__tag">● Live demo</p>
+              <p class="appdemo__txt">
+                This is Abacus tracking its own site — exactly what your dashboard
+                looks like. Add your domain to start measuring yours.
+              </p>
+            </div>
+            <a href="/app" class="appbtn">Add your site →</a>
           </div>
         )
       }
-    </div>
 
-    <!-- Breakdowns -->
-    <div class="mt-4 grid gap-4 lg:grid-cols-3">
-      <BarList title="Top pages" label="Pageviews" items={stats.topPages} />
-      <BarList title="Top sources" label="Pageviews" items={stats.topReferrers} />
-      <BarList title="Countries" label="Pageviews" items={stats.topCountries} />
-    </div>
-  </main>
+      <div class="dtop">
+        <div class="dhello">{site.domain}</div>
+        <div class="appranges">
+          {
+            [7, 30, 90].map((d) => (
+              <a
+                href={`?range=${d}`}
+                class={`appranges__btn${d === days ? " is-active" : ""}`}
+              >
+                {d}d
+              </a>
+            ))
+          }
+        </div>
+      </div>
+      <p class="dhello__sub">
+        {
+          stats.source === "d1"
+            ? "Showing rolled-up data (live Analytics Engine not configured locally)."
+            : "Live data from Analytics Engine."
+        }
+      </p>
+
+      {
+        !hasData && (
+          <div class="appsnippet">
+            <h2 class="appsnippet__h">Waiting for your first visit</h2>
+            <p class="appsnippet__p">
+              Add this snippet to the <code>&lt;head&gt;</code> of {site.domain}.
+              Data appears within seconds of your first pageview.
+            </p>
+            <pre class="appsnippet__pre"><code>{snippet}</code></pre>
+          </div>
+        )
+      }
+
+      <!-- stat strip -->
+      <div class="dstats appstats">
+        {
+          cards.map((c) => (
+            <div class="dstat">
+              <div class="dstat__top">
+                <span class="dstat__label">{c.label}</span>
+              </div>
+              <div class="dstat__val">{c.value}</div>
+            </div>
+          ))
+        }
+      </div>
+
+      <!-- pageviews trend -->
+      <div class="dchart">
+        <div class="dchart__head">
+          <div class="dchart__metric">
+            <span class="dchart__num">{compact(stats.pageviews)}</span>
+            <span class="dchart__cap">Pageviews · last {days} days</span>
+          </div>
+          <div class="dchart__legend">
+            <span class="dchart__tag on">
+              <span class="swat"></span>Pageviews
+            </span>
+          </div>
+        </div>
+        <div class="dchart__plot">
+          {
+            hasData ? (
+              <canvas id="trendChart"></canvas>
+            ) : (
+              <p class="appchart__empty">No data yet</p>
+            )
+          }
+        </div>
+        <div class="dchart__axis">
+          {axisIdx.map((idx) => <span>{series[idx]?.label}</span>)}
+        </div>
+      </div>
+
+      <!-- breakdowns -->
+      <div class="appbreak">
+        <BarList title="Top pages" label="Pageviews" items={stats.topPages} />
+        <BarList title="Top sources" label="Pageviews" items={stats.topReferrers} />
+        <BarList title="Countries" label="Pageviews" items={stats.topCountries} />
+      </div>
+    </main>
+  </div>
+
+  {
+    hasData && (
+      <script
+        type="application/json"
+        id="trend-data"
+        set:html={chartData}
+      />
+    )
+  }
 </Layout>
+
+{
+  hasData && (
+    <script>
+      import {
+        Chart,
+        LineController,
+        LineElement,
+        PointElement,
+        LinearScale,
+        CategoryScale,
+        Filler,
+        Tooltip,
+      } from "chart.js";
+
+      Chart.register(
+        LineController,
+        LineElement,
+        PointElement,
+        LinearScale,
+        CategoryScale,
+        Filler,
+        Tooltip,
+      );
+
+      const el = document.getElementById("trend-data");
+      const canvas = document.getElementById("trendChart") as HTMLCanvasElement | null;
+      if (el && canvas) {
+        const data = JSON.parse(el.textContent || "{}") as {
+          labels: string[];
+          pageviews: number[];
+        };
+        const ctx = canvas.getContext("2d")!;
+        const grad = ctx.createLinearGradient(0, 0, 0, 168);
+        grad.addColorStop(0, "rgba(91,70,229,0.30)");
+        grad.addColorStop(1, "rgba(91,70,229,0)");
+        new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: data.labels,
+            datasets: [
+              {
+                data: data.pageviews,
+                borderColor: "#5b46e5",
+                borderWidth: 2.2,
+                backgroundColor: grad,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 0,
+                pointHoverRadius: 4,
+                pointHoverBackgroundColor: "#fff",
+                pointHoverBorderColor: "#5b46e5",
+                pointHoverBorderWidth: 2.4,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: 450 },
+            interaction: { intersect: false, mode: "index" },
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                displayColors: false,
+                backgroundColor: "rgba(20,18,40,0.92)",
+                padding: 8,
+                callbacks: {
+                  title: (items) => items[0]?.label ?? "",
+                  label: (c) => `${(c.parsed.y ?? 0).toLocaleString()} pageviews`,
+                },
+              },
+            },
+            scales: {
+              x: { display: false },
+              y: { display: false, beginAtZero: true, grace: "12%" },
+            },
+          },
+        });
+      }
+    </script>
+  )
+}
