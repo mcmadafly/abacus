@@ -26,9 +26,9 @@ export const onRequest = (
   next: Parameters<typeof withClerk>[1],
 ) => {
   // Waitlist mode (prod, no Clerk yet): keep /app + auth pages off-limits and
-  // send everyone to the early-adopter list instead.
+  // send everyone back to the home page instead.
   if (WAITLIST && needsClerk(context.request)) {
-    return context.redirect("/beta");
+    return context.redirect("/");
   }
   // Dev bypass: skip Clerk entirely (pages fall back to a dev user).
   if (AUTH_DISABLED) return next();

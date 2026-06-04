@@ -5,7 +5,7 @@
 import { and, eq } from "drizzle-orm";
 import { createDb, accounts, sites, type Account, type Site } from "@abacus/db";
 import { isPaid } from "./plans";
-import { notifySignup } from "./notify";
+import { notifySignup, welcomeUser } from "./notify";
 
 /** The shared, read-only "live demo" site shown to new users (see db/demo.sql). */
 export const DEMO_SITE_ID = "demo";
@@ -68,16 +68,15 @@ export async function ensureAccount(
     .onConflictDoNothing()
     .returning({ id: accounts.id });
 
-  // Brand-new account → notify the admin (best effort; only fires once since
-  // subsequent calls hit the conflict and return nothing).
+  // Brand-new account → welcome the user + notify the admin (best effort; only
+  // fires once since subsequent calls hit the conflict and return nothing).
   if (inserted.length > 0 && env) {
     try {
       const all = await db.select({ id: accounts.id }).from(accounts);
-      await notifySignup(env, {
-        email,
-        userId,
-        totalAccounts: all.length,
-      });
+      await Promise.allSettled([
+        welcomeUser(env, { email }),
+        notifySignup(env, { email, userId, totalAccounts: all.length }),
+      ]);
     } catch (err) {
       console.error("signup notification failed:", err);
     }

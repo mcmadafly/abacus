@@ -1,6 +1,6 @@
 // Stand-in for `@clerk/astro/server` in the no-auth ("waitlist") build, aliased
 // via astro.config when the Clerk integration is omitted. `clerkMiddleware` is
-// never invoked (auth routes redirect to /beta first); `createRouteMatcher` is
+// never invoked (auth routes redirect home first); `createRouteMatcher` is
 // reimplemented so the middleware's route checks still work.
 
 export function createRouteMatcher(patterns: string[]) {

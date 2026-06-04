@@ -37,6 +37,8 @@ export async function resendSendEmail(
     to: string[];
     subject: string;
     html: string;
+    /** Where replies should go (e.g. a real human's inbox). */
+    replyTo?: string;
     /** Extra MIME headers, e.g. List-Unsubscribe. */
     headers?: Record<string, string>;
   },
@@ -47,7 +49,14 @@ export async function resendSendEmail(
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(msg),
+    body: JSON.stringify({
+      from: msg.from,
+      to: msg.to,
+      subject: msg.subject,
+      html: msg.html,
+      ...(msg.replyTo ? { reply_to: msg.replyTo } : {}),
+      ...(msg.headers ? { headers: msg.headers } : {}),
+    }),
   });
   if (!res.ok) {
     throw new Error(`Resend send-email ${res.status}: ${await res.text()}`);
