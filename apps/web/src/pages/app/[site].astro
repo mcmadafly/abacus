@@ -15,6 +15,7 @@ import {
 import { resolveUser } from "../../lib/auth";
 import { getStatsWithDelta, pctDelta } from "../../lib/query";
 import { accountUsage } from "../../lib/usage";
+import { safeTz, shiftDay, todayInTz } from "../../lib/tz";
 
 export const prerender = false;
 
@@ -40,17 +41,16 @@ const daysLeft = trialDaysLeft(account);
 const usage = await accountUsage(env, account, mySites.map((s) => s.id));
 const digestStatus = Astro.url.searchParams.get("digest");
 
-// Range: ?range=7|30|90 (days), default 7.
+// Range: ?range=7|30|90 (days), default 7. Dates use the viewer's timezone
+// (from the abacus_tz cookie) so "today" matches their local day, not UTC.
 const range = Number(Astro.url.searchParams.get("range")) || 7;
 const days = [7, 30, 90].includes(range) ? range : 7;
 
-const today = new Date();
-const endDay = today.toISOString().slice(0, 10);
-const startDate = new Date(today);
-startDate.setUTCDate(startDate.getUTCDate() - (days - 1));
-const startDay = startDate.toISOString().slice(0, 10);
+const tz = safeTz(Astro.cookies.get("abacus_tz")?.value);
+const endDay = todayInTz(tz);
+const startDay = shiftDay(endDay, -(days - 1));
 
-const stats = await getStatsWithDelta(env, site.id, startDay, endDay, days);
+const stats = await getStatsWithDelta(env, site.id, startDay, endDay, days, tz);
 const hasData = stats.pageviews > 0;
 
 // Build complete, zero-filled per-day series so the chart + sparklines always
@@ -65,9 +65,7 @@ const dayLabel = (iso: string) =>
 type Day = { date: string; label: string; pageviews: number; visitors: number };
 const series: Day[] = [];
 for (let i = 0; i < days; i++) {
-  const dt = new Date(startDate);
-  dt.setUTCDate(startDate.getUTCDate() + i);
-  const iso = dt.toISOString().slice(0, 10);
+  const iso = shiftDay(startDay, i);
   const d = byDay.get(iso);
   series.push({
     date: iso,

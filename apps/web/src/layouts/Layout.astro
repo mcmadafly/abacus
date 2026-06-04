@@ -29,6 +29,30 @@ const {
         }
       })();
     </script>
+    <!-- Record the viewer's timezone in a cookie so the dashboard can show days
+         in their local time (not UTC). One reload on the first /app visit lets
+         the SSR pick it up. -->
+    <script is:inline>
+      (function () {
+        try {
+          var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          if (!tz) return;
+          var had = document.cookie.indexOf("abacus_tz=") !== -1;
+          document.cookie =
+            "abacus_tz=" +
+            encodeURIComponent(tz) +
+            ";path=/;max-age=31536000;samesite=lax";
+          if (
+            !had &&
+            location.pathname.indexOf("/app") === 0 &&
+            !sessionStorage.getItem("abacus_tz_set")
+          ) {
+            sessionStorage.setItem("abacus_tz_set", "1");
+            location.reload();
+          }
+        } catch (e) {}
+      })();
+    </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>

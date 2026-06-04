@@ -7,6 +7,7 @@
  */
 import { and, eq, gte, inArray, lte } from "drizzle-orm";
 import { createDb, dailyStats, type TopItem } from "@abacus/db";
+import { tzOffsetSeconds } from "./tz";
 
 /** Sum pageviews across sites over [startDay, endDay] from the D1 rollup. */
 export async function sumPageviews(
@@ -81,10 +82,12 @@ export async function getStats(
   siteId: string,
   startDay: string,
   endDay: string,
+  tz = "UTC",
 ): Promise<SiteStats> {
   if (aeConfigured(env)) {
-    return getStatsFromAE(env, siteId, startDay, endDay);
+    return getStatsFromAE(env, siteId, startDay, endDay, tz);
   }
+  // D1 rollup is UTC-bucketed; tz is ignored on the offline fallback.
   return getStatsFromD1(env, siteId, startDay, endDay);
 }
 
@@ -93,11 +96,19 @@ export async function getStatsFromAE(
   siteId: string,
   startDay: string,
   endDay: string,
+  tz = "UTC",
 ): Promise<SiteStats> {
-  // AE timestamps are UTC; make the range end-exclusive on the next day.
-  const start = `${startDay} 00:00:00`;
-  const endExclusive = `${addDay(endDay)} 00:00:00`;
-  const where = `index1 = '${esc(siteId)}' AND blob8 = 'pageview' AND timestamp >= toDateTime('${start}') AND timestamp < toDateTime('${endExclusive}')`;
+  // AE stores UTC timestamps and its SQL can't convert zones, so we shift the
+  // unix time by the zone's offset to bucket/filter by the viewer's local day.
+  const off = tzOffsetSeconds(tz);
+  const u =
+    off === 0
+      ? "toUnixTimestamp(timestamp)"
+      : `(toUnixTimestamp(timestamp) ${off > 0 ? `+ ${off}` : `- ${-off}`})`;
+  const startUnix = Math.floor(Date.parse(`${startDay}T00:00:00Z`) / 1000);
+  const endUnix = Math.floor(Date.parse(`${addDay(endDay)}T00:00:00Z`) / 1000);
+  const where = `index1 = '${esc(siteId)}' AND blob8 = 'pageview' AND ${u} >= ${startUnix} AND ${u} < ${endUnix}`;
+  const dayExpr = off === 0 ? "toDate(timestamp)" : `toDate(toDateTime(${u}))`;
 
   const [totals, pages, refs, countries, byDay] = await Promise.all([
     queryAE<{ pageviews: unknown; visitors: unknown }>(
@@ -109,7 +120,7 @@ export async function getStatsFromAE(
     topQuery(env, where, "blob3"),
     queryAE<{ d: string; pageviews: unknown; visitors: unknown }>(
       env,
-      `SELECT toDate(timestamp) AS d, sum(_sample_interval) AS pageviews, count(DISTINCT blob7) AS visitors FROM ${AE_TABLE} WHERE ${where} GROUP BY d ORDER BY d ASC`,
+      `SELECT ${dayExpr} AS d, sum(_sample_interval) AS pageviews, count(DISTINCT blob7) AS visitors FROM ${AE_TABLE} WHERE ${where} GROUP BY d ORDER BY d ASC`,
     ),
   ]);
 
@@ -215,12 +226,13 @@ export async function getStatsWithDelta(
   startDay: string,
   endDay: string,
   days: number,
+  tz = "UTC",
 ): Promise<StatsWithDelta> {
   const prevEnd = addDay(startDay, -1);
   const prevStart = addDay(startDay, -days);
   const [cur, prev] = await Promise.all([
-    getStats(env, siteId, startDay, endDay),
-    getStats(env, siteId, prevStart, prevEnd),
+    getStats(env, siteId, startDay, endDay, tz),
+    getStats(env, siteId, prevStart, prevEnd, tz),
   ]);
   return {
     ...cur,

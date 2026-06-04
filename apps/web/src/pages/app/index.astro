@@ -12,6 +12,7 @@ import {
 import { resolveUser } from "../../lib/auth";
 import { getStatsWithDelta, pctDelta } from "../../lib/query";
 import { accountUsage } from "../../lib/usage";
+import { safeTz, todayInTz, shiftDay } from "../../lib/tz";
 
 export const prerender = false;
 
@@ -36,15 +37,13 @@ const usage = await accountUsage(
   sites.map((s) => s.id),
 );
 
-// Range for the cross-site summary.
+// Range for the cross-site summary, in the viewer's timezone.
 const range = Number(Astro.url.searchParams.get("range")) || 30;
 const days = [7, 30, 90].includes(range) ? range : 30;
 const env = Astro.locals.runtime.env;
-const today = new Date();
-const endDay = today.toISOString().slice(0, 10);
-const startDate = new Date(today);
-startDate.setUTCDate(startDate.getUTCDate() - (days - 1));
-const startDay = startDate.toISOString().slice(0, 10);
+const tz = safeTz(Astro.cookies.get("abacus_tz")?.value);
+const endDay = todayInTz(tz);
+const startDay = shiftDay(endDay, -(days - 1));
 
 const compact = (n: number) =>
   n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}k` : String(n);
@@ -55,7 +54,7 @@ const rows =
   sites.length > 1
     ? await Promise.all(
         sites.map(async (s) => {
-          const st = await getStatsWithDelta(env, s.id, startDay, endDay, days);
+          const st = await getStatsWithDelta(env, s.id, startDay, endDay, days, tz);
           return {
             site: s,
             visitors: st.visitors,
