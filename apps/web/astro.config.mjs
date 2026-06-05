@@ -57,9 +57,39 @@ const stripClerkScriptsSSR = {
   },
 };
 
+// Wrap every markdown-rendered <table> in <div class="tablewrap"> so it picks
+// up the same rounded, horizontally-scrollable container as the hand-authored
+// tables in the prose styles. Tiny hand-rolled rehype plugin (no extra dep).
+function rehypeWrapTables() {
+  /** @param {any} tree */
+  return (tree) => {
+    /** @param {any} node */
+    const walk = (node) => {
+      if (!node || !Array.isArray(node.children)) return;
+      for (let i = 0; i < node.children.length; i++) {
+        const child = node.children[i];
+        if (child && child.type === "element" && child.tagName === "table") {
+          node.children[i] = {
+            type: "element",
+            tagName: "div",
+            properties: { className: ["tablewrap"] },
+            children: [child],
+          };
+        } else {
+          walk(child);
+        }
+      }
+    };
+    walk(tree);
+  };
+}
+
 // https://astro.build/config
 export default defineConfig({
   output: "server",
+  markdown: {
+    rehypePlugins: [rehypeWrapTables],
+  },
   // The ingest endpoint (/api/event) is cross-origin by design (called from
   // customer sites), so Astro's same-origin CSRF check must be off. Dashboard
   // mutations are protected by Clerk's SameSite session cookies instead.

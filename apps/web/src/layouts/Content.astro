@@ -23,11 +23,19 @@ interface Props {
   meta?: string;
   /** Optional page-specific JSON-LD, forwarded to the base Layout. */
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+  /** Optional markdown alternate path, forwarded to the base Layout. */
+  markdownHref?: string;
 }
-const { title, description, eyebrow, heading, sub, meta, jsonLd } = Astro.props;
+const { title, description, eyebrow, heading, sub, meta, jsonLd, markdownHref } =
+  Astro.props;
 ---
 
-<Layout title={title} description={description} jsonLd={jsonLd}>
+<Layout
+  title={title}
+  description={description}
+  jsonLd={jsonLd}
+  markdownHref={markdownHref}
+>
   <Nav />
   <main>
     <section class="sec">
