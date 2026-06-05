@@ -1,15 +1,45 @@
 ---
 import "../styles/global.css";
+import { SITE_URL, GITHUB_URL } from "../lib/site";
 
 interface Props {
   title?: string;
   description?: string;
+  /** Page-specific JSON-LD (e.g. a BlogPosting). Merged with the site-wide
+   *  Organization + WebSite schema. */
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 }
 
 const {
   title = "Abacus — privacy-first analytics, delivered to your inbox",
   description = "Abacus is a featherweight, cookie-free analytics tool that respects your visitors — and emails you a clean, readable report every morning.",
+  jsonLd,
 } = Astro.props;
+
+// Canonical URL: always the production origin + this page's path (no query
+// string), so search engines and LLMs de-dupe to one address.
+const canonical = new URL(Astro.url.pathname, SITE_URL).href;
+
+// Site-wide structured data, plus any page-specific schema.
+const structuredData: Record<string, unknown>[] = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "Abacus",
+    url: SITE_URL,
+    logo: `${SITE_URL}/brandmark.png`,
+    description:
+      "Privacy-first web analytics with a daily email digest. Cookie-free, no personal data, open source.",
+    sameAs: [GITHUB_URL],
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "Abacus",
+    url: SITE_URL,
+  },
+  ...(jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : []),
+];
 ---
 
 <!doctype html>
@@ -54,18 +84,28 @@ const {
       })();
     </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href={canonical} />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content={Astro.url.href} />
+    <meta property="og:site_name" content="Abacus" />
+    <meta property="og:url" content={canonical} />
     <meta property="og:image" content={new URL("/og.jpg", Astro.url).href} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content={new URL("/og.jpg", Astro.url).href} />
+    {
+      structuredData.map((schema) => (
+        <script
+          type="application/ld+json"
+          set:html={JSON.stringify(schema)}
+        />
+      ))
+    }
     <!-- Abacus eats its own dog food: the marketing site is tracked by Abacus
          into the "abacuslytics.com" site in the dashboard. We skip the
          app/auth/api routes so logged-in usage doesn't inflate marketing stats.

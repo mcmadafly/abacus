@@ -1,0 +1,95 @@
+---
+import Content from "../layouts/Content.astro";
+import { CONTACT_EMAIL, GITHUB_URL } from "../lib/site";
+
+const updated = "June 2026";
+---
+
+<Content
+  title="Data Policy — Abacus"
+  description="The technical details of what Abacus measures, how it's stored, and how we keep visitors anonymous."
+  eyebrow="Data Policy"
+  heading="Exactly what we <em>measure.</em>"
+  sub="A technical companion to our Privacy Policy: the specific data points Abacus collects, how long we keep them, and the engineering choices that keep your visitors anonymous."
+  meta={`Last updated ${updated}`}
+>
+  <h3>Design principle: anonymous by construction</h3>
+  <p>
+    Abacus is built so that we <em>can't</em> identify your visitors, not just that
+    we promise not to. There are no cookies, no device fingerprints stored, and no
+    raw IP addresses kept. Anonymity isn't a setting you turn on — it's the only way
+    the system works. The tracker is open source, so you can verify every claim
+    below: <a href={GITHUB_URL} target="_blank" rel="noopener">read the code</a>.
+  </p>
+
+  <h3>What the tracker sends</h3>
+  <p>The Abacus script is a few hundred bytes. On each pageview it sends a single request containing:</p>
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>Field</th><th>Example</th><th>Why</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Domain</td><td><code>yourdomain.com</code></td><td>Routes the event to your site</td></tr>
+        <tr><td>Path</td><td><code>/pricing</code></td><td>Top-pages report</td></tr>
+        <tr><td>Referrer</td><td><code>google.com</code></td><td>Traffic-sources report</td></tr>
+        <tr><td>Screen width</td><td><code>1280</code></td><td>Device-type breakdown</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    The script reads no cookies, writes no cookies, and uses no local storage on the
+    visitor's device. It hooks the History API so single-page-app route changes are
+    counted, and nothing else.
+  </p>
+
+  <h3>What the server derives</h3>
+  <p>From the incoming request, our edge worker derives a few more fields and then discards the raw inputs:</p>
+  <ul>
+    <li><strong>Country</strong> — from Cloudflare's edge geolocation. We keep the country; we never store the IP.</li>
+    <li><strong>Browser / OS / device</strong> — parsed from the User-Agent string, which is then discarded.</li>
+    <li><strong>Visitor hash</strong> — a salted, one-way hash used only to deduplicate unique visitors.</li>
+  </ul>
+
+  <h4>How the visitor hash works</h4>
+  <p>
+    To count "unique visitors" without identifying anyone, we compute
+    <code>hash(daily_salt + ip + user_agent + domain)</code>. Three properties make
+    this safe:
+  </p>
+  <ul>
+    <li>It's a <strong>one-way</strong> cryptographic hash — you can't recover the IP or User-Agent from it.</li>
+    <li>The <strong>salt rotates every day</strong>, so the same visitor produces a different hash tomorrow. We can count uniques within a day, but not follow anyone over time.</li>
+    <li>It includes your <strong>domain</strong>, so the same person on two different Abacus sites never collides into a cross-site profile.</li>
+  </ul>
+
+  <h3>Where data lives</h3>
+  <p>
+    Raw events are written to Cloudflare's Analytics Engine and rolled up nightly
+    into daily aggregates (pageviews, visitors, top pages, sources, countries) stored
+    in a Cloudflare D1 database. Your dashboard and daily email read from those
+    aggregates. Everything runs on Cloudflare's network.
+  </p>
+
+  <h3>Retention</h3>
+  <ul>
+    <li><strong>Raw events</strong> are short-lived and used only to build the daily rollup.</li>
+    <li><strong>Daily aggregates</strong> are retained for the life of your account so your trends stay intact.</li>
+    <li>Deleting a site or your account removes the associated aggregates.</li>
+  </ul>
+
+  <h3>Data ownership and export</h3>
+  <p>
+    Your stats belong to you. You can view them in the dashboard, receive them by
+    email, and request an export at any time. Because Abacus is
+    <a href={GITHUB_URL} target="_blank" rel="noopener">open source</a> (AGPL-3.0),
+    you can also self-host the entire stack and keep every byte on your own
+    infrastructure.
+  </p>
+
+  <h3>Questions</h3>
+  <p>
+    For anything not covered here, email <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
+    See also our <a href="/privacy">Privacy Policy</a>.
+  </p>
+</Content>

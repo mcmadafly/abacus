@@ -1,0 +1,103 @@
+---
+import Content from "../layouts/Content.astro";
+import { CONTACT_EMAIL } from "../lib/site";
+
+const updated = "June 2026";
+---
+
+<Content
+  title="Privacy Policy — Abacus"
+  description="How Abacus handles your data and your visitors' data. Short version: no cookies, no personal data, nothing sold."
+  eyebrow="Privacy"
+  heading="Privacy, in <em>plain English.</em>"
+  sub="We built Abacus because we were tired of analytics that treat visitors like a product. This policy explains exactly what we collect, what we don't, and why."
+  meta={`Last updated ${updated}`}
+>
+  <h3>The short version</h3>
+  <ul>
+    <li>We do <strong>not</strong> use cookies or any other persistent identifier on the sites you measure.</li>
+    <li>We do <strong>not</strong> collect or store personal data about your visitors.</li>
+    <li>We do <strong>not</strong> sell, rent, or share data with advertisers — ever.</li>
+    <li>We do <strong>not</strong> track your visitors across sites or build profiles of them.</li>
+    <li>Your analytics data is yours. We only use it to show you your dashboard and email your reports.</li>
+  </ul>
+
+  <h3>Who this covers</h3>
+  <p>
+    This policy applies to two groups of people: the <strong>account holders</strong>
+    who sign up for Abacus, and the <strong>visitors</strong> to the websites those
+    account holders measure. We treat both with care, but we collect very different
+    things from each.
+  </p>
+
+  <h3>What we collect from your website's visitors</h3>
+  <p>
+    When someone visits a site running the Abacus script, we record an anonymous,
+    aggregate-only pageview. For each pageview we may process:
+  </p>
+  <ul>
+    <li>The page URL (path and query string, minus anything that looks like a token)</li>
+    <li>The referring URL or source</li>
+    <li>The browser, operating system, and device type (derived from the User-Agent)</li>
+    <li>The country, derived from the IP address at request time</li>
+    <li>The screen size bucket</li>
+  </ul>
+  <p>
+    We do <strong>not</strong> store IP addresses, and we do <strong>not</strong>
+    set cookies or use local storage on your visitors' devices. To count unique
+    visitors without identifying anyone, we compute a one-way salted hash from the
+    IP address, User-Agent, and your site's domain. The salt <strong>rotates every
+    day</strong>, so the hash cannot be reversed, linked across days, or used to
+    follow a person from one site to another. Because we never store personal data
+    and never set a cookie, sites using Abacus generally do not need a cookie
+    consent banner — though you should confirm your own obligations.
+  </p>
+
+  <h3>What we collect from account holders</h3>
+  <p>When you sign up for an Abacus account, we store:</p>
+  <ul>
+    <li>Your email address and authentication details (handled by our auth provider, Clerk)</li>
+    <li>The domains you've registered and your dashboard settings</li>
+    <li>Billing details, if you're on a paid plan (handled by our payment processor, Stripe — we never see your full card number)</li>
+  </ul>
+
+  <h3>How we use it</h3>
+  <ul>
+    <li>To render your analytics dashboard</li>
+    <li>To email you the daily report you signed up for (and the occasional important account email)</li>
+    <li>To bill you correctly if you're on a paid plan</li>
+    <li>To keep the service secure and working</li>
+  </ul>
+  <p>You can unsubscribe from the daily report at any time from the dashboard or the link in any email.</p>
+
+  <h3>Sub-processors</h3>
+  <p>We rely on a small set of vendors to run Abacus. They only ever see the minimum needed to do their job:</p>
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>Vendor</th><th>Purpose</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Cloudflare</td><td>Hosting, edge compute, and analytics storage</td></tr>
+        <tr><td>Clerk</td><td>Account sign-in and authentication</td></tr>
+        <tr><td>Stripe</td><td>Subscription billing (paid plans only)</td></tr>
+        <tr><td>Resend</td><td>Sending your report and account emails</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Your rights</h3>
+  <p>
+    You can access, export, or delete your account data at any time. Deleting your
+    account removes your sites and aggregate stats. Visitor data is anonymous and
+    aggregate by design, so there is no personal record to request or erase — there
+    is nothing tied to an individual to begin with.
+  </p>
+
+  <h3>Questions</h3>
+  <p>
+    Email us at <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> and a real
+    person will reply. For the technical specifics of what we measure and how, see
+    the <a href="/data-policy">Data Policy</a>.
+  </p>
+</Content>

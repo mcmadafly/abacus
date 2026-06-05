@@ -14,3 +14,11 @@ export const WAITLIST = import.meta.env.PROD && !AUTH_ENABLED;
 
 export const START_HREF = "/sign-up";
 export const SIGNIN_HREF = "/sign-in";
+
+/** Canonical production origin (no trailing slash). Used for canonical URLs,
+ *  sitemap, llms.txt, and structured data. */
+export const SITE_URL = "https://abacuslytics.com";
+/** Public source repository (Abacus is AGPL-3.0 licensed). */
+export const GITHUB_URL = "https://github.com/mcmadafly/abacus";
+/** Where to reach a human. */
+export const CONTACT_EMAIL = "hello@abacuslytics.com";

@@ -1,5 +1,6 @@
 ---
 import BrandMark from "./BrandMark.astro";
+import { GITHUB_URL, CONTACT_EMAIL } from "../lib/site";
 const year = new Date().getFullYear();
 ---
 
@@ -25,17 +26,15 @@ const year = new Date().getFullYear();
       </div>
       <div class="foot__col">
         <h4>Company</h4>
-        <a href="/#">About</a>
-        <a href="/#">Blog</a>
-        <a href="/#">Open source</a>
-        <a href="/#">Contact</a>
+        <a href="/blog">Blog</a>
+        <a href={GITHUB_URL} target="_blank" rel="noopener">Open source ↗</a>
+        <a href={`mailto:${CONTACT_EMAIL}`}>Contact</a>
       </div>
       <div class="foot__col">
         <h4>Support</h4>
         <a href="/docs">Docs</a>
-        <a href="/#">Status</a>
-        <a href="/#">Data policy</a>
-        <a href="/#">Privacy</a>
+        <a href="/data-policy">Data policy</a>
+        <a href="/privacy">Privacy</a>
       </div>
     </div>
     <div class="foot__bar">

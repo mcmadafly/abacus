@@ -1,0 +1,121 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Nav from "../../components/Nav.astro";
+import Footer from "../../components/Footer.astro";
+import { POSTS } from "../../lib/posts";
+---
+
+<Layout
+  title="Blog — Abacus"
+  description="Writing on privacy-first analytics: how Abacus compares to Google Analytics, Plausible, and rolling your own."
+>
+  <Nav />
+  <main>
+    <section class="sec">
+      <div class="wrap blog">
+        <div class="sec__head">
+          <span class="eyebrow"><span class="dot"></span>Blog</span>
+          <h2>Notes on <em>honest analytics.</em></h2>
+          <p class="blog__sub">
+            Comparisons, opinions, and the occasional deep dive — written by the
+            people building Abacus.
+          </p>
+        </div>
+
+        <ul class="blog__list">
+          {
+            POSTS.map((post) => (
+              <li class="blog__item">
+                <a href={`/blog/${post.slug}`} class="blog__card">
+                  <p class="blog__meta">
+                    {post.date} · {post.readingTime}
+                  </p>
+                  <h3 class="blog__title" set:html={post.heading} />
+                  <p class="blog__dek">{post.dek}</p>
+                  <span class="blog__more">
+                    Read <span class="arrow">→</span>
+                  </span>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>
+
+<style>
+  .blog {
+    max-width: 820px;
+  }
+  .blog__sub {
+    color: var(--ink-soft);
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-top: 14px;
+  }
+  .blog__list {
+    list-style: none;
+    padding: 0;
+    margin: 44px 0 0;
+    display: grid;
+    gap: 18px;
+  }
+  .blog__card {
+    display: block;
+    padding: 28px 30px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-soft);
+    transition:
+      border-color 0.2s,
+      transform 0.16s ease,
+      box-shadow 0.2s;
+  }
+  .blog__card:hover {
+    border-color: var(--indigo);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-card);
+  }
+  .blog__meta {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  .blog__title {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 1.6rem;
+    letter-spacing: -0.01em;
+    margin-top: 8px;
+  }
+  .blog__title :global(em) {
+    font-style: italic;
+    color: var(--indigo);
+  }
+  .blog__dek {
+    color: var(--ink-soft);
+    line-height: 1.6;
+    margin-top: 10px;
+    text-wrap: pretty;
+  }
+  .blog__more {
+    display: inline-block;
+    margin-top: 16px;
+    font-weight: 600;
+    font-size: 0.92rem;
+    color: var(--indigo);
+  }
+  .blog__more .arrow {
+    display: inline-block;
+    transition: transform 0.2s;
+  }
+  .blog__card:hover .blog__more .arrow {
+    transform: translateX(3px);
+  }
+</style>

@@ -1,0 +1,138 @@
+---
+import Content from "../../layouts/Content.astro";
+import { getPost, plainHeading } from "../../lib/posts";
+import { START_HREF, GITHUB_URL, SITE_URL } from "../../lib/site";
+
+const post = getPost("abacus-vs-build-it-yourself");
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  headline: plainHeading(post),
+  description: post.dek,
+  datePublished: post.iso,
+  dateModified: post.iso,
+  url: `${SITE_URL}/blog/${post.slug}`,
+  author: { "@type": "Organization", name: "Abacus", url: SITE_URL },
+  publisher: {
+    "@type": "Organization",
+    name: "Abacus",
+    logo: { "@type": "ImageObject", url: `${SITE_URL}/brandmark.png` },
+  },
+};
+---
+
+<Content
+  title={post.title}
+  description={post.dek}
+  eyebrow="Comparison"
+  heading={post.heading}
+  sub={post.dek}
+  meta={`${post.date} · ${post.readingTime}`}
+  jsonLd={jsonLd}
+>
+  <p>
+    Every developer has had the thought: <em>analytics is just counting requests —
+    I'll log pageviews to a table and write a query.</em> It's true, and for a
+    weekend it's even fun. The trouble is that the weekend version is the easy 20%.
+    Here's the 80% that shows up later, and how to decide whether it's worth your
+    time.
+  </p>
+
+  <h3>The seductive first version</h3>
+  <p>
+    A homegrown analytics setup usually starts like this: a tiny endpoint that
+    inserts a row per request, a <code>pageviews</code> table, and a couple of
+    <code>GROUP BY</code> queries. It works immediately, costs nothing, and you own
+    every byte. If your needs never grow past "how many hits did this page get," you
+    may genuinely be done — and that's a legitimate choice.
+  </p>
+
+  <h3>What you discover in month two</h3>
+  <ul>
+    <li>
+      <strong>Unique visitors are hard.</strong> Counting <em>people</em> instead of
+      <em>requests</em> means deduplication. Do it with a cookie and you've just
+      signed yourself up for a consent banner. Do it privately and you're now
+      designing a salted, rotating hash scheme — and getting it wrong leaks data.
+    </li>
+    <li>
+      <strong>Bots are everywhere.</strong> A surprising fraction of raw traffic is
+      crawlers and scanners. Without filtering, your "growth" is mostly robots.
+    </li>
+    <li>
+      <strong>Parsing is endless.</strong> User-Agent strings, referrer
+      normalization (so <code>google.com</code> and <code>www.google.com/</code> are
+      one source), UTM handling, country lookup from IP — each is a small project.
+    </li>
+    <li>
+      <strong>Raw rows don't scale.</strong> One row per pageview is fine until it
+      isn't. Then you need rollups, retention policies, and indexes, or your queries
+      crawl and your bill climbs.
+    </li>
+    <li>
+      <strong>Privacy is a feature you have to build.</strong> "Don't store the IP"
+      sounds simple but touches your whole pipeline, and it's exactly the part that
+      gets you in trouble if it's wrong.
+    </li>
+    <li>
+      <strong>Then someone wants a dashboard.</strong> And charts. And a weekly
+      email. Now you're building a product, not a query.
+    </li>
+  </ul>
+
+  <h3>The real cost isn't the code — it's the upkeep</h3>
+  <p>
+    The first version takes a weekend. The maintained version takes a slice of your
+    attention forever: the schema migration when you add a metric, the 2&nbsp;a.m.
+    page when the ingest endpoint falls over, the afternoon lost to "why don't these
+    two numbers match." None of it ships your actual product. That ongoing tax is the
+    thing the build-it-yourself estimate always forgets.
+  </p>
+
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>&nbsp;</th><th>Abacus</th><th>Roll your own</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Time to first chart</td><td>Minutes</td><td>A weekend, then ongoing</td></tr>
+        <tr><td>Unique-visitor counting</td><td>Solved (rotating hash)</td><td>You design it</td></tr>
+        <tr><td>Bot filtering</td><td>Built in</td><td>You maintain it</td></tr>
+        <tr><td>Cookie/consent risk</td><td>Avoided by design</td><td>Easy to get wrong</td></tr>
+        <tr><td>Dashboard &amp; email</td><td>Included</td><td>Another project</td></tr>
+        <tr><td>Who fixes it at 2&nbsp;a.m.</td><td>Us</td><td>You</td></tr>
+        <tr><td>Ownership of the code</td><td>Open source (AGPL)</td><td>Total</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>When rolling your own is the right move</h3>
+  <p>
+    Sometimes it genuinely is. Build it yourself if analytics <em>is</em> your product,
+    if you have data-residency or schema requirements no vendor meets, or if your
+    needs are so narrow that a single query truly covers them and always will. In
+    those cases the control is worth the maintenance.
+  </p>
+
+  <h3>The middle path</h3>
+  <p>
+    Here's the thing people miss: with Abacus you don't have to choose between
+    "someone else's black box" and "build everything." Abacus is
+    <a href={GITHUB_URL} target="_blank" rel="noopener">open source</a> under AGPL-3.0.
+    You can self-host the entire stack, read exactly how the hashing and rollups work,
+    and modify it — all the ownership of a homegrown system, none of the blank-page
+    cost. Or use our hosted version, skip the upkeep entirely, and get the daily email
+    for the price of a coffee.
+  </p>
+  <p>
+    Counting pageviews is easy. Running analytics is not. The question isn't whether
+    you <em>could</em> build it — you obviously could. It's whether maintaining it
+    forever is the best use of the time you'd rather spend on the thing you're
+    actually trying to grow.
+  </p>
+
+  <div class="article__foot">
+    <a href={START_HREF} class="btn btn--dark">Start free <span class="arrow">→</span></a>
+    <a href={GITHUB_URL} target="_blank" rel="noopener" class="btn btn--ghost">View the source</a>
+  </div>
+</Content>

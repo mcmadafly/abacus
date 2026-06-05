@@ -1,0 +1,186 @@
+---
+/**
+ * Shared layout for long-form text pages (legal, blog posts). Renders the
+ * marketing Nav + Footer around a centered prose column. Pass the page chrome
+ * via props; the article body goes in the default slot.
+ */
+import Layout from "./Layout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+
+interface Props {
+  /** <title> + og:title. */
+  title: string;
+  /** Meta description (optional). */
+  description?: string;
+  /** Small mono eyebrow above the heading. */
+  eyebrow: string;
+  /** Page heading; may contain <em> for the accent word. */
+  heading: string;
+  /** Optional dek under the heading. */
+  sub?: string;
+  /** Optional meta line (e.g. a blog date / read time). */
+  meta?: string;
+  /** Optional page-specific JSON-LD, forwarded to the base Layout. */
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+}
+const { title, description, eyebrow, heading, sub, meta, jsonLd } = Astro.props;
+---
+
+<Layout title={title} description={description} jsonLd={jsonLd}>
+  <Nav />
+  <main>
+    <section class="sec">
+      <div class="wrap article">
+        <div class="sec__head">
+          <span class="eyebrow"><span class="dot"></span>{eyebrow}</span>
+          <h2 set:html={heading}></h2>
+          {sub && <p class="article__sub">{sub}</p>}
+          {meta && <p class="article__meta">{meta}</p>}
+        </div>
+        <div class="prose">
+          <slot />
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>
+
+<style>
+  .article {
+    max-width: 760px;
+  }
+  .article__sub {
+    color: var(--ink-soft);
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-top: 14px;
+    text-wrap: pretty;
+  }
+  .article__meta {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-top: 16px;
+  }
+
+  .prose {
+    margin-top: 40px;
+  }
+  .prose :global(h3) {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 1.5rem;
+    letter-spacing: -0.01em;
+    margin-top: 44px;
+  }
+  .prose :global(h3:first-child) {
+    margin-top: 0;
+  }
+  .prose :global(h4) {
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 1.05rem;
+    margin-top: 28px;
+  }
+  .prose :global(p) {
+    color: var(--ink-soft);
+    font-size: 1rem;
+    line-height: 1.7;
+    margin-top: 14px;
+  }
+  .prose :global(ul),
+  .prose :global(ol) {
+    margin-top: 14px;
+    padding-left: 22px;
+    display: grid;
+    gap: 10px;
+  }
+  .prose :global(li) {
+    color: var(--ink-soft);
+    line-height: 1.65;
+  }
+  .prose :global(a:not(.btn)) {
+    color: var(--indigo);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .prose :global(a:not(.btn):hover) {
+    color: var(--indigo-d);
+  }
+  .prose :global(strong) {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .prose :global(code) {
+    font-family: var(--mono);
+    font-size: 0.82em;
+    background: var(--bg-2);
+    border: 1px solid var(--line-soft);
+    border-radius: 5px;
+    padding: 1px 6px;
+  }
+  .prose :global(blockquote) {
+    margin-top: 18px;
+    padding: 4px 0 4px 18px;
+    border-left: 3px solid var(--indigo);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 1.15rem;
+    line-height: 1.5;
+  }
+  .prose :global(hr) {
+    margin: 40px 0;
+    border: none;
+    border-top: 1px solid var(--line);
+  }
+
+  /* Comparison tables */
+  .prose :global(.tablewrap) {
+    margin-top: 22px;
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+  }
+  .prose :global(table) {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+  }
+  .prose :global(th),
+  .prose :global(td) {
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line-soft);
+    vertical-align: top;
+  }
+  .prose :global(thead th) {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    background: var(--bg-2);
+  }
+  .prose :global(tbody tr:last-child td) {
+    border-bottom: none;
+  }
+  .prose :global(td:first-child) {
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  .prose :global(.article__foot) {
+    margin-top: 56px;
+    padding-top: 28px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: center;
+  }
+</style>
